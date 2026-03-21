@@ -1,16 +1,16 @@
 import { Router, type IRouter } from "express";
 import { db } from "@workspace/db";
-import { stockMovementsTable, itemsTable } from "@workspace/db/schema";
-import { eq } from "drizzle-orm";
+import { stockMovementsTable, itemsTable, inventoryTable } from "@workspace/db/schema";
+import { eq, sql } from "drizzle-orm";
 
 const router: IRouter = Router();
 
-router.get("/stock-movements", async (req, res) => {
+router.get("/stock-movements", async (req, res): Promise<void> => {
   try {
     const itemId = req.query.itemId ? parseInt(req.query.itemId as string) : undefined;
     const type = req.query.type as "in" | "out" | undefined;
 
-    let query = db
+    const allResults = await db
       .select({
         id: stockMovementsTable.id,
         itemId: stockMovementsTable.itemId,
@@ -24,8 +24,7 @@ router.get("/stock-movements", async (req, res) => {
       .from(stockMovementsTable)
       .leftJoin(itemsTable, eq(stockMovementsTable.itemId, itemsTable.id));
 
-    const results = await query;
-    let filtered = results;
+    let filtered = allResults;
     if (itemId) filtered = filtered.filter((r) => r.itemId === itemId);
     if (type) filtered = filtered.filter((r) => r.movementType === type);
     res.json(filtered);
@@ -35,16 +34,39 @@ router.get("/stock-movements", async (req, res) => {
   }
 });
 
-router.post("/stock-movements", async (req, res) => {
+router.post("/stock-movements", async (req, res): Promise<void> => {
   try {
-    const { itemId, movementType, quantity, reference, notes } = req.body;
+    const { itemId, movementType, quantity, reference, notes } = req.body as {
+      itemId: number;
+      movementType: "in" | "out";
+      quantity: number;
+      reference?: string;
+      notes?: string;
+    };
     if (!itemId || !movementType || quantity == null) {
-      return res.status(400).json({ error: "itemId, movementType and quantity are required" });
+      res.status(400).json({ error: "itemId, movementType and quantity are required" });
+      return;
     }
+
     const [created] = await db
       .insert(stockMovementsTable)
       .values({ itemId, movementType, quantity, reference, notes })
       .returning();
+
+    const [existingInventory] = await db
+      .select()
+      .from(inventoryTable)
+      .where(eq(inventoryTable.itemId, itemId));
+
+    if (existingInventory) {
+      const delta = movementType === "in" ? quantity : -quantity;
+      const newQty = Math.max(0, existingInventory.quantityAvailable + delta);
+      await db
+        .update(inventoryTable)
+        .set({ quantityAvailable: newQty, updatedAt: new Date() })
+        .where(eq(inventoryTable.itemId, itemId));
+    }
+
     res.status(201).json({ ...created, itemName: null });
   } catch (err) {
     req.log.error(err);
@@ -52,7 +74,7 @@ router.post("/stock-movements", async (req, res) => {
   }
 });
 
-router.get("/stock-movements/:id", async (req, res) => {
+router.get("/stock-movements/:id", async (req, res): Promise<void> => {
   try {
     const id = parseInt(req.params.id);
     const [result] = await db
@@ -69,7 +91,10 @@ router.get("/stock-movements/:id", async (req, res) => {
       .from(stockMovementsTable)
       .leftJoin(itemsTable, eq(stockMovementsTable.itemId, itemsTable.id))
       .where(eq(stockMovementsTable.id, id));
-    if (!result) return res.status(404).json({ error: "Not found" });
+    if (!result) {
+      res.status(404).json({ error: "Not found" });
+      return;
+    }
     res.json(result);
   } catch (err) {
     req.log.error(err);
@@ -77,7 +102,27 @@ router.get("/stock-movements/:id", async (req, res) => {
   }
 });
 
-router.delete("/stock-movements/:id", async (req, res) => {
+router.put("/stock-movements/:id", async (req, res): Promise<void> => {
+  try {
+    const id = parseInt(req.params.id);
+    const { reference, notes } = req.body as { reference?: string; notes?: string };
+    const [updated] = await db
+      .update(stockMovementsTable)
+      .set({ reference, notes })
+      .where(eq(stockMovementsTable.id, id))
+      .returning();
+    if (!updated) {
+      res.status(404).json({ error: "Not found" });
+      return;
+    }
+    res.json({ ...updated, itemName: null });
+  } catch (err) {
+    req.log.error(err);
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
+router.delete("/stock-movements/:id", async (req, res): Promise<void> => {
   try {
     const id = parseInt(req.params.id);
     await db.delete(stockMovementsTable).where(eq(stockMovementsTable.id, id));

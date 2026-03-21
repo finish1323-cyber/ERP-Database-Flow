@@ -5,7 +5,7 @@ import { eq, like, or } from "drizzle-orm";
 
 const router: IRouter = Router();
 
-router.get("/customers", async (req, res) => {
+router.get("/customers", async (req, res): Promise<void> => {
   try {
     const search = req.query.search as string | undefined;
     if (search) {
@@ -14,7 +14,8 @@ router.get("/customers", async (req, res) => {
         .select()
         .from(customersTable)
         .where(or(like(customersTable.name, pattern), like(customersTable.phone, pattern)));
-      return res.json(results);
+      res.json(results);
+      return;
     }
     const results = await db.select().from(customersTable);
     res.json(results);
@@ -24,13 +25,28 @@ router.get("/customers", async (req, res) => {
   }
 });
 
-router.post("/customers", async (req, res) => {
+router.post("/customers", async (req, res): Promise<void> => {
   try {
-    const { name, phone, email, deliverySuccessRate, notes } = req.body;
-    if (!name) return res.status(400).json({ error: "name is required" });
+    const { name, phone, email, deliverySuccessRate, notes } = req.body as {
+      name: string;
+      phone?: string;
+      email?: string;
+      deliverySuccessRate?: number;
+      notes?: string;
+    };
+    if (!name) {
+      res.status(400).json({ error: "name is required" });
+      return;
+    }
     const [created] = await db
       .insert(customersTable)
-      .values({ name, phone, email, deliverySuccessRate: deliverySuccessRate?.toString(), notes })
+      .values({
+        name,
+        phone,
+        email,
+        deliverySuccessRate: deliverySuccessRate != null ? String(deliverySuccessRate) : null,
+        notes,
+      })
       .returning();
     res.status(201).json(created);
   } catch (err) {
@@ -39,11 +55,14 @@ router.post("/customers", async (req, res) => {
   }
 });
 
-router.get("/customers/:id", async (req, res) => {
+router.get("/customers/:id", async (req, res): Promise<void> => {
   try {
     const id = parseInt(req.params.id);
     const [customer] = await db.select().from(customersTable).where(eq(customersTable.id, id));
-    if (!customer) return res.status(404).json({ error: "Customer not found" });
+    if (!customer) {
+      res.status(404).json({ error: "Customer not found" });
+      return;
+    }
     res.json(customer);
   } catch (err) {
     req.log.error(err);
@@ -51,16 +70,31 @@ router.get("/customers/:id", async (req, res) => {
   }
 });
 
-router.put("/customers/:id", async (req, res) => {
+router.put("/customers/:id", async (req, res): Promise<void> => {
   try {
     const id = parseInt(req.params.id);
-    const { name, phone, email, deliverySuccessRate, notes } = req.body;
+    const { name, phone, email, deliverySuccessRate, notes } = req.body as {
+      name?: string;
+      phone?: string;
+      email?: string;
+      deliverySuccessRate?: number;
+      notes?: string;
+    };
     const [updated] = await db
       .update(customersTable)
-      .set({ name, phone, email, deliverySuccessRate: deliverySuccessRate?.toString(), notes })
+      .set({
+        name,
+        phone,
+        email,
+        deliverySuccessRate: deliverySuccessRate != null ? String(deliverySuccessRate) : null,
+        notes,
+      })
       .where(eq(customersTable.id, id))
       .returning();
-    if (!updated) return res.status(404).json({ error: "Customer not found" });
+    if (!updated) {
+      res.status(404).json({ error: "Customer not found" });
+      return;
+    }
     res.json(updated);
   } catch (err) {
     req.log.error(err);
@@ -68,7 +102,7 @@ router.put("/customers/:id", async (req, res) => {
   }
 });
 
-router.delete("/customers/:id", async (req, res) => {
+router.delete("/customers/:id", async (req, res): Promise<void> => {
   try {
     const id = parseInt(req.params.id);
     await db.delete(customersTable).where(eq(customersTable.id, id));

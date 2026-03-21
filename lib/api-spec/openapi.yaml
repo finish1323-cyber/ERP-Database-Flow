@@ -528,6 +528,35 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
+    put:
+      operationId: updateStockMovement
+      tags: [stockMovements]
+      summary: Update a stock movement (reference/notes only)
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateStockMovement"
+      responses:
+        "200":
+          description: Updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StockMovement"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
     delete:
       operationId: deleteStockMovement
       tags: [stockMovements]
@@ -1132,6 +1161,16 @@ components:
         - itemId
         - movementType
         - quantity
+
+    UpdateStockMovement:
+      type: object
+      properties:
+        reference:
+          type: string
+          nullable: true
+        notes:
+          type: string
+          nullable: true
 
     Customer:
       type: object

@@ -1,11 +1,11 @@
 import { Router, type IRouter } from "express";
 import { db } from "@workspace/db";
 import { inventoryTable, itemsTable } from "@workspace/db/schema";
-import { eq, sql } from "drizzle-orm";
+import { eq } from "drizzle-orm";
 
 const router: IRouter = Router();
 
-router.get("/inventory", async (req, res) => {
+router.get("/inventory", async (req, res): Promise<void> => {
   try {
     const lowStock = req.query.lowStock === "true";
     const results = await db
@@ -27,9 +27,9 @@ router.get("/inventory", async (req, res) => {
     }));
 
     if (lowStock) {
-      return res.json(mapped.filter((r) => r.isLowStock));
+      res.json(mapped.filter((r) => r.isLowStock));
+      return;
     }
-
     res.json(mapped);
   } catch (err) {
     req.log.error(err);
@@ -37,11 +37,17 @@ router.get("/inventory", async (req, res) => {
   }
 });
 
-router.post("/inventory", async (req, res) => {
+router.post("/inventory", async (req, res): Promise<void> => {
   try {
-    const { itemId, quantityAvailable, safetyLevel, location } = req.body;
+    const { itemId, quantityAvailable, safetyLevel, location } = req.body as {
+      itemId: number;
+      quantityAvailable: number;
+      safetyLevel: number;
+      location?: string;
+    };
     if (itemId == null || quantityAvailable == null || safetyLevel == null) {
-      return res.status(400).json({ error: "itemId, quantityAvailable, and safetyLevel are required" });
+      res.status(400).json({ error: "itemId, quantityAvailable, and safetyLevel are required" });
+      return;
     }
     const [created] = await db
       .insert(inventoryTable)
@@ -54,7 +60,7 @@ router.post("/inventory", async (req, res) => {
   }
 });
 
-router.get("/inventory/:id", async (req, res) => {
+router.get("/inventory/:id", async (req, res): Promise<void> => {
   try {
     const id = parseInt(req.params.id);
     const [result] = await db
@@ -70,7 +76,10 @@ router.get("/inventory/:id", async (req, res) => {
       .from(inventoryTable)
       .leftJoin(itemsTable, eq(inventoryTable.itemId, itemsTable.id))
       .where(eq(inventoryTable.id, id));
-    if (!result) return res.status(404).json({ error: "Not found" });
+    if (!result) {
+      res.status(404).json({ error: "Not found" });
+      return;
+    }
     res.json({ ...result, isLowStock: result.quantityAvailable <= result.safetyLevel });
   } catch (err) {
     req.log.error(err);
@@ -78,16 +87,24 @@ router.get("/inventory/:id", async (req, res) => {
   }
 });
 
-router.put("/inventory/:id", async (req, res) => {
+router.put("/inventory/:id", async (req, res): Promise<void> => {
   try {
     const id = parseInt(req.params.id);
-    const { itemId, quantityAvailable, safetyLevel, location } = req.body;
+    const { itemId, quantityAvailable, safetyLevel, location } = req.body as {
+      itemId?: number;
+      quantityAvailable?: number;
+      safetyLevel?: number;
+      location?: string;
+    };
     const [updated] = await db
       .update(inventoryTable)
       .set({ itemId, quantityAvailable, safetyLevel, location, updatedAt: new Date() })
       .where(eq(inventoryTable.id, id))
       .returning();
-    if (!updated) return res.status(404).json({ error: "Not found" });
+    if (!updated) {
+      res.status(404).json({ error: "Not found" });
+      return;
+    }
     res.json({ ...updated, itemName: null, isLowStock: updated.quantityAvailable <= updated.safetyLevel });
   } catch (err) {
     req.log.error(err);
@@ -95,7 +112,7 @@ router.put("/inventory/:id", async (req, res) => {
   }
 });
 
-router.delete("/inventory/:id", async (req, res) => {
+router.delete("/inventory/:id", async (req, res): Promise<void> => {
   try {
     const id = parseInt(req.params.id);
     await db.delete(inventoryTable).where(eq(inventoryTable.id, id));

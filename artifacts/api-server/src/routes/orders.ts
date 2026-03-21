@@ -5,7 +5,7 @@ import { eq } from "drizzle-orm";
 
 const router: IRouter = Router();
 
-router.get("/orders", async (req, res) => {
+router.get("/orders", async (req, res): Promise<void> => {
   try {
     const customerId = req.query.customerId ? parseInt(req.query.customerId as string) : undefined;
     const status = req.query.status as string | undefined;
@@ -33,17 +33,24 @@ router.get("/orders", async (req, res) => {
   }
 });
 
-router.post("/orders", async (req, res) => {
+router.post("/orders", async (req, res): Promise<void> => {
   try {
-    const { customerId, status = "pending", notes, items } = req.body;
-    if (!customerId) return res.status(400).json({ error: "customerId is required" });
+    const { customerId, status = "pending", notes, items } = req.body as {
+      customerId: number;
+      status?: "pending" | "confirmed" | "delivered" | "cancelled";
+      notes?: string;
+      items: Array<{ itemId: number; quantity: number; unitPrice: number }>;
+    };
+    if (!customerId) {
+      res.status(400).json({ error: "customerId is required" });
+      return;
+    }
     if (!items || !Array.isArray(items) || items.length === 0) {
-      return res.status(400).json({ error: "items array is required" });
+      res.status(400).json({ error: "items array is required" });
+      return;
     }
 
-    const totalAmount = items.reduce((sum: number, item: { quantity: number; unitPrice: number }) => {
-      return sum + item.quantity * item.unitPrice;
-    }, 0);
+    const totalAmount = items.reduce((sum, item) => sum + item.quantity * item.unitPrice, 0);
 
     const [order] = await db
       .insert(ordersTable)
@@ -51,7 +58,7 @@ router.post("/orders", async (req, res) => {
       .returning();
 
     await db.insert(orderItemsTable).values(
-      items.map((item: { itemId: number; quantity: number; unitPrice: number }) => ({
+      items.map((item) => ({
         orderId: order.id,
         itemId: item.itemId,
         quantity: item.quantity,
@@ -66,7 +73,7 @@ router.post("/orders", async (req, res) => {
   }
 });
 
-router.get("/orders/:id", async (req, res) => {
+router.get("/orders/:id", async (req, res): Promise<void> => {
   try {
     const id = parseInt(req.params.id);
     const [order] = await db
@@ -83,7 +90,10 @@ router.get("/orders/:id", async (req, res) => {
       .leftJoin(customersTable, eq(ordersTable.customerId, customersTable.id))
       .where(eq(ordersTable.id, id));
 
-    if (!order) return res.status(404).json({ error: "Order not found" });
+    if (!order) {
+      res.status(404).json({ error: "Order not found" });
+      return;
+    }
 
     const orderItems = await db
       .select({
@@ -105,16 +115,19 @@ router.get("/orders/:id", async (req, res) => {
   }
 });
 
-router.put("/orders/:id", async (req, res) => {
+router.put("/orders/:id", async (req, res): Promise<void> => {
   try {
     const id = parseInt(req.params.id);
-    const { status, notes } = req.body;
+    const { status, notes } = req.body as { status?: "pending" | "confirmed" | "delivered" | "cancelled"; notes?: string };
     const [updated] = await db
       .update(ordersTable)
       .set({ status, notes })
       .where(eq(ordersTable.id, id))
       .returning();
-    if (!updated) return res.status(404).json({ error: "Order not found" });
+    if (!updated) {
+      res.status(404).json({ error: "Order not found" });
+      return;
+    }
     res.json({ ...updated, customerName: null });
   } catch (err) {
     req.log.error(err);
@@ -122,7 +135,7 @@ router.put("/orders/:id", async (req, res) => {
   }
 });
 
-router.delete("/orders/:id", async (req, res) => {
+router.delete("/orders/:id", async (req, res): Promise<void> => {
   try {
     const id = parseInt(req.params.id);
     await db.delete(orderItemsTable).where(eq(orderItemsTable.orderId, id));

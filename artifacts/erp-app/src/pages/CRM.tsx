@@ -129,7 +129,7 @@ function OrdersTab() {
 
   const handleCreate = (e: React.FormEvent) => {
     e.preventDefault();
-    if(!formData.customerId || formData.items[0].itemId === 0) return toast({title: "البيانات غير مكتملة", variant: "destructive"});
+    if(!formData.customerId || formData.items[0].itemId === 0) { toast({title: "البيانات غير مكتملة", variant: "destructive"}); return; }
     createMut.mutate({ data: { customerId: formData.customerId, status: "pending", items: formData.items } });
   };
 

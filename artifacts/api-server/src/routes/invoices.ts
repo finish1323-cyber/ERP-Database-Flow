@@ -5,7 +5,7 @@ import { eq } from "drizzle-orm";
 
 const router: IRouter = Router();
 
-router.get("/invoices", async (req, res) => {
+router.get("/invoices", async (req, res): Promise<void> => {
   try {
     const orderId = req.query.orderId ? parseInt(req.query.orderId as string) : undefined;
 
@@ -33,11 +33,19 @@ router.get("/invoices", async (req, res) => {
   }
 });
 
-router.post("/invoices", async (req, res) => {
+router.post("/invoices", async (req, res): Promise<void> => {
   try {
-    const { orderId, invoiceNumber, issuedAt, total, status = "draft", notes } = req.body;
+    const { orderId, invoiceNumber, issuedAt, total, status = "draft", notes } = req.body as {
+      orderId: number;
+      invoiceNumber: string;
+      issuedAt: string;
+      total: number;
+      status?: "draft" | "issued" | "paid" | "cancelled";
+      notes?: string;
+    };
     if (!orderId || !invoiceNumber || !issuedAt || total == null) {
-      return res.status(400).json({ error: "orderId, invoiceNumber, issuedAt and total are required" });
+      res.status(400).json({ error: "orderId, invoiceNumber, issuedAt and total are required" });
+      return;
     }
     const [created] = await db
       .insert(invoicesTable)
@@ -50,7 +58,7 @@ router.post("/invoices", async (req, res) => {
   }
 });
 
-router.get("/invoices/:id", async (req, res) => {
+router.get("/invoices/:id", async (req, res): Promise<void> => {
   try {
     const id = parseInt(req.params.id);
     const [result] = await db
@@ -69,7 +77,10 @@ router.get("/invoices/:id", async (req, res) => {
       .leftJoin(ordersTable, eq(invoicesTable.orderId, ordersTable.id))
       .leftJoin(customersTable, eq(ordersTable.customerId, customersTable.id))
       .where(eq(invoicesTable.id, id));
-    if (!result) return res.status(404).json({ error: "Invoice not found" });
+    if (!result) {
+      res.status(404).json({ error: "Invoice not found" });
+      return;
+    }
     res.json(result);
   } catch (err) {
     req.log.error(err);
@@ -77,16 +88,33 @@ router.get("/invoices/:id", async (req, res) => {
   }
 });
 
-router.put("/invoices/:id", async (req, res) => {
+router.put("/invoices/:id", async (req, res): Promise<void> => {
   try {
     const id = parseInt(req.params.id);
-    const { orderId, invoiceNumber, issuedAt, total, status, notes } = req.body;
+    const { orderId, invoiceNumber, issuedAt, total, status, notes } = req.body as {
+      orderId?: number;
+      invoiceNumber?: string;
+      issuedAt?: string;
+      total?: number;
+      status?: "draft" | "issued" | "paid" | "cancelled";
+      notes?: string;
+    };
     const [updated] = await db
       .update(invoicesTable)
-      .set({ orderId, invoiceNumber, issuedAt: issuedAt ? new Date(issuedAt) : undefined, total: total?.toString(), status, notes })
+      .set({
+        orderId,
+        invoiceNumber,
+        issuedAt: issuedAt ? new Date(issuedAt) : undefined,
+        total: total != null ? total.toString() : undefined,
+        status,
+        notes,
+      })
       .where(eq(invoicesTable.id, id))
       .returning();
-    if (!updated) return res.status(404).json({ error: "Invoice not found" });
+    if (!updated) {
+      res.status(404).json({ error: "Invoice not found" });
+      return;
+    }
     res.json({ ...updated, customerName: null });
   } catch (err) {
     req.log.error(err);
@@ -94,7 +122,7 @@ router.put("/invoices/:id", async (req, res) => {
   }
 });
 
-router.delete("/invoices/:id", async (req, res) => {
+router.delete("/invoices/:id", async (req, res): Promise<void> => {
   try {
     const id = parseInt(req.params.id);
     await db.delete(invoicesTable).where(eq(invoicesTable.id, id));

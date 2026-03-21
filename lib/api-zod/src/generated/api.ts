@@ -399,6 +399,29 @@ export const GetStockMovementResponse = zod.object({
 });
 
 /**
+ * @summary Update a stock movement (reference/notes only)
+ */
+export const UpdateStockMovementParams = zod.object({
+  id: zod.coerce.number(),
+});
+
+export const UpdateStockMovementBody = zod.object({
+  reference: zod.string().nullish(),
+  notes: zod.string().nullish(),
+});
+
+export const UpdateStockMovementResponse = zod.object({
+  id: zod.number(),
+  itemId: zod.number(),
+  movementType: zod.enum(["in", "out"]),
+  quantity: zod.number(),
+  reference: zod.string().nullish(),
+  notes: zod.string().nullish(),
+  createdAt: zod.date(),
+  itemName: zod.string().nullish(),
+});
+
+/**
  * @summary Delete a stock movement
  */
 export const DeleteStockMovementParams = zod.object({

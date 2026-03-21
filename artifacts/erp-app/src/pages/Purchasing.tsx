@@ -218,7 +218,7 @@ function PriceComparisonsTab() {
 
   const handleCreate = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!formData.itemId || !formData.supplierId) return toast({title: "الرجاء اختيار الصنف والمورد", variant: "destructive"});
+    if (!formData.itemId || !formData.supplierId) { toast({title: "الرجاء اختيار الصنف والمورد", variant: "destructive"}); return; }
     createMut.mutate({ data: formData });
   };
 

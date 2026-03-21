@@ -47,3 +47,4 @@ export * from "./stockMovementMovementType";
 export * from "./supplier";
 export * from "./updateOrder";
 export * from "./updateOrderStatus";
+export * from "./updateStockMovement";

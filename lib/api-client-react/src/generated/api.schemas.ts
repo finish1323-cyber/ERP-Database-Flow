@@ -131,6 +131,11 @@ export interface CreateStockMovement {
   notes?: string | null;
 }
 
+export interface UpdateStockMovement {
+  reference?: string | null;
+  notes?: string | null;
+}
+
 export interface Customer {
   id: number;
   name: string;

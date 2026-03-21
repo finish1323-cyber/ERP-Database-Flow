@@ -46,6 +46,7 @@ import type {
   StockMovement,
   Supplier,
   UpdateOrder,
+  UpdateStockMovement,
 } from "./api.schemas";
 
 import { customFetch } from "../custom-fetch";
@@ -2225,6 +2226,93 @@ export function useGetStockMovement<
 
   return { ...query, queryKey: queryOptions.queryKey };
 }
+
+/**
+ * @summary Update a stock movement (reference/notes only)
+ */
+export const getUpdateStockMovementUrl = (id: number) => {
+  return `/api/stock-movements/${id}`;
+};
+
+export const updateStockMovement = async (
+  id: number,
+  updateStockMovement: UpdateStockMovement,
+  options?: RequestInit,
+): Promise<StockMovement> => {
+  return customFetch<StockMovement>(getUpdateStockMovementUrl(id), {
+    ...options,
+    method: "PUT",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(updateStockMovement),
+  });
+};
+
+export const getUpdateStockMovementMutationOptions = <
+  TError = ErrorType<ErrorResponse>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof updateStockMovement>>,
+    TError,
+    { id: number; data: BodyType<UpdateStockMovement> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof updateStockMovement>>,
+  TError,
+  { id: number; data: BodyType<UpdateStockMovement> },
+  TContext
+> => {
+  const mutationKey = ["updateStockMovement"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof updateStockMovement>>,
+    { id: number; data: BodyType<UpdateStockMovement> }
+  > = (props) => {
+    const { id, data } = props ?? {};
+
+    return updateStockMovement(id, data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type UpdateStockMovementMutationResult = NonNullable<
+  Awaited<ReturnType<typeof updateStockMovement>>
+>;
+export type UpdateStockMovementMutationBody = BodyType<UpdateStockMovement>;
+export type UpdateStockMovementMutationError = ErrorType<ErrorResponse>;
+
+/**
+ * @summary Update a stock movement (reference/notes only)
+ */
+export const useUpdateStockMovement = <
+  TError = ErrorType<ErrorResponse>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof updateStockMovement>>,
+    TError,
+    { id: number; data: BodyType<UpdateStockMovement> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof updateStockMovement>>,
+  TError,
+  { id: number; data: BodyType<UpdateStockMovement> },
+  TContext
+> => {
+  return useMutation(getUpdateStockMovementMutationOptions(options));
+};
 
 /**
  * @summary Delete a stock movement
