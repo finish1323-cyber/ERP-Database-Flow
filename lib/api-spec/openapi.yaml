@@ -3,13 +3,32 @@ info:
   # Do not change the title, if the title changes, the import paths will be broken
   title: Api
   version: 0.1.0
-  description: API specification
+  description: Internal ERP API specification
 servers:
   - url: /api
     description: Base API path
 tags:
   - name: health
     description: Health operations
+  - name: suppliers
+    description: Supplier management
+  - name: items
+    description: Item/product catalog
+  - name: priceComparisons
+    description: Price comparison across suppliers
+  - name: inventory
+    description: Inventory management
+  - name: stockMovements
+    description: Stock movement tracking
+  - name: customers
+    description: Customer management
+  - name: orders
+    description: Order management
+  - name: invoices
+    description: Invoice management
+  - name: dashboard
+    description: Dashboard statistics
+
 paths:
   /healthz:
     get:
@@ -24,6 +43,807 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HealthStatus"
+
+  /dashboard/stats:
+    get:
+      operationId: getDashboardStats
+      tags: [dashboard]
+      summary: Get dashboard statistics
+      responses:
+        "200":
+          description: Dashboard stats
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DashboardStats"
+
+  # Suppliers
+  /suppliers:
+    get:
+      operationId: listSuppliers
+      tags: [suppliers]
+      summary: List all suppliers
+      parameters:
+        - name: search
+          in: query
+          schema:
+            type: string
+      responses:
+        "200":
+          description: List of suppliers
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Supplier"
+    post:
+      operationId: createSupplier
+      tags: [suppliers]
+      summary: Create a supplier
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateSupplier"
+      responses:
+        "201":
+          description: Created supplier
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Supplier"
+
+  /suppliers/{id}:
+    get:
+      operationId: getSupplier
+      tags: [suppliers]
+      summary: Get supplier by ID
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Supplier
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Supplier"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+    put:
+      operationId: updateSupplier
+      tags: [suppliers]
+      summary: Update a supplier
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateSupplier"
+      responses:
+        "200":
+          description: Updated supplier
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Supplier"
+    delete:
+      operationId: deleteSupplier
+      tags: [suppliers]
+      summary: Delete a supplier
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: Deleted
+
+  # Items
+  /items:
+    get:
+      operationId: listItems
+      tags: [items]
+      summary: List all items
+      parameters:
+        - name: search
+          in: query
+          schema:
+            type: string
+        - name: category
+          in: query
+          schema:
+            type: string
+      responses:
+        "200":
+          description: List of items
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Item"
+    post:
+      operationId: createItem
+      tags: [items]
+      summary: Create an item
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateItem"
+      responses:
+        "201":
+          description: Created item
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Item"
+
+  /items/{id}:
+    get:
+      operationId: getItem
+      tags: [items]
+      summary: Get item by ID
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Item
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Item"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+    put:
+      operationId: updateItem
+      tags: [items]
+      summary: Update an item
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateItem"
+      responses:
+        "200":
+          description: Updated item
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Item"
+    delete:
+      operationId: deleteItem
+      tags: [items]
+      summary: Delete an item
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: Deleted
+
+  # Price Comparisons
+  /price-comparisons:
+    get:
+      operationId: listPriceComparisons
+      tags: [priceComparisons]
+      summary: List price comparisons
+      parameters:
+        - name: itemId
+          in: query
+          schema:
+            type: integer
+        - name: supplierId
+          in: query
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: List of price comparisons
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/PriceComparison"
+    post:
+      operationId: createPriceComparison
+      tags: [priceComparisons]
+      summary: Create a price comparison
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreatePriceComparison"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PriceComparison"
+
+  /price-comparisons/{id}:
+    get:
+      operationId: getPriceComparison
+      tags: [priceComparisons]
+      summary: Get price comparison by ID
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Price comparison
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PriceComparison"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+    put:
+      operationId: updatePriceComparison
+      tags: [priceComparisons]
+      summary: Update a price comparison
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreatePriceComparison"
+      responses:
+        "200":
+          description: Updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PriceComparison"
+    delete:
+      operationId: deletePriceComparison
+      tags: [priceComparisons]
+      summary: Delete a price comparison
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: Deleted
+
+  # Inventory
+  /inventory:
+    get:
+      operationId: listInventory
+      tags: [inventory]
+      summary: List inventory
+      parameters:
+        - name: lowStock
+          in: query
+          schema:
+            type: boolean
+      responses:
+        "200":
+          description: List of inventory entries
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/InventoryEntry"
+    post:
+      operationId: createInventoryEntry
+      tags: [inventory]
+      summary: Create inventory entry
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateInventoryEntry"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/InventoryEntry"
+
+  /inventory/{id}:
+    get:
+      operationId: getInventoryEntry
+      tags: [inventory]
+      summary: Get inventory entry by ID
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Inventory entry
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/InventoryEntry"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+    put:
+      operationId: updateInventoryEntry
+      tags: [inventory]
+      summary: Update inventory entry
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateInventoryEntry"
+      responses:
+        "200":
+          description: Updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/InventoryEntry"
+    delete:
+      operationId: deleteInventoryEntry
+      tags: [inventory]
+      summary: Delete inventory entry
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: Deleted
+
+  # Stock Movements
+  /stock-movements:
+    get:
+      operationId: listStockMovements
+      tags: [stockMovements]
+      summary: List stock movements
+      parameters:
+        - name: itemId
+          in: query
+          schema:
+            type: integer
+        - name: type
+          in: query
+          schema:
+            type: string
+            enum: [in, out]
+      responses:
+        "200":
+          description: List of stock movements
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/StockMovement"
+    post:
+      operationId: createStockMovement
+      tags: [stockMovements]
+      summary: Log a stock movement
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateStockMovement"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StockMovement"
+
+  /stock-movements/{id}:
+    get:
+      operationId: getStockMovement
+      tags: [stockMovements]
+      summary: Get stock movement by ID
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Stock movement
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StockMovement"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+    delete:
+      operationId: deleteStockMovement
+      tags: [stockMovements]
+      summary: Delete a stock movement
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: Deleted
+
+  # Customers
+  /customers:
+    get:
+      operationId: listCustomers
+      tags: [customers]
+      summary: List all customers
+      parameters:
+        - name: search
+          in: query
+          schema:
+            type: string
+      responses:
+        "200":
+          description: List of customers
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Customer"
+    post:
+      operationId: createCustomer
+      tags: [customers]
+      summary: Create a customer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateCustomer"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Customer"
+
+  /customers/{id}:
+    get:
+      operationId: getCustomer
+      tags: [customers]
+      summary: Get customer by ID
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Customer
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Customer"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+    put:
+      operationId: updateCustomer
+      tags: [customers]
+      summary: Update a customer
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateCustomer"
+      responses:
+        "200":
+          description: Updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Customer"
+    delete:
+      operationId: deleteCustomer
+      tags: [customers]
+      summary: Delete a customer
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: Deleted
+
+  # Orders
+  /orders:
+    get:
+      operationId: listOrders
+      tags: [orders]
+      summary: List all orders
+      parameters:
+        - name: customerId
+          in: query
+          schema:
+            type: integer
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [pending, confirmed, delivered, cancelled]
+      responses:
+        "200":
+          description: List of orders
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Order"
+    post:
+      operationId: createOrder
+      tags: [orders]
+      summary: Create an order
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateOrder"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Order"
+
+  /orders/{id}:
+    get:
+      operationId: getOrder
+      tags: [orders]
+      summary: Get order by ID
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Order with items
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OrderDetail"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+    put:
+      operationId: updateOrder
+      tags: [orders]
+      summary: Update an order
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateOrder"
+      responses:
+        "200":
+          description: Updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Order"
+    delete:
+      operationId: deleteOrder
+      tags: [orders]
+      summary: Delete an order
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: Deleted
+
+  # Invoices
+  /invoices:
+    get:
+      operationId: listInvoices
+      tags: [invoices]
+      summary: List all invoices
+      parameters:
+        - name: orderId
+          in: query
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: List of invoices
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Invoice"
+    post:
+      operationId: createInvoice
+      tags: [invoices]
+      summary: Create an invoice
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateInvoice"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Invoice"
+
+  /invoices/{id}:
+    get:
+      operationId: getInvoice
+      tags: [invoices]
+      summary: Get invoice by ID
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Invoice
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Invoice"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+    put:
+      operationId: updateInvoice
+      tags: [invoices]
+      summary: Update an invoice
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateInvoice"
+      responses:
+        "200":
+          description: Updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Invoice"
+    delete:
+      operationId: deleteInvoice
+      tags: [invoices]
+      summary: Delete an invoice
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: Deleted
+
 components:
   schemas:
     HealthStatus:
@@ -34,3 +854,512 @@ components:
       required:
         - status
 
+    ErrorResponse:
+      type: object
+      properties:
+        error:
+          type: string
+      required:
+        - error
+
+    DashboardStats:
+      type: object
+      properties:
+        suppliersCount:
+          type: integer
+        itemsCount:
+          type: integer
+        customersCount:
+          type: integer
+        ordersCount:
+          type: integer
+        invoicesCount:
+          type: integer
+        lowStockCount:
+          type: integer
+        pendingOrdersCount:
+          type: integer
+        totalRevenue:
+          type: number
+      required:
+        - suppliersCount
+        - itemsCount
+        - customersCount
+        - ordersCount
+        - invoicesCount
+        - lowStockCount
+        - pendingOrdersCount
+        - totalRevenue
+
+    Supplier:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        contactName:
+          type: string
+          nullable: true
+        phone:
+          type: string
+          nullable: true
+        email:
+          type: string
+          nullable: true
+        address:
+          type: string
+          nullable: true
+        createdAt:
+          type: string
+          format: date-time
+      required:
+        - id
+        - name
+        - createdAt
+
+    CreateSupplier:
+      type: object
+      properties:
+        name:
+          type: string
+        contactName:
+          type: string
+          nullable: true
+        phone:
+          type: string
+          nullable: true
+        email:
+          type: string
+          nullable: true
+        address:
+          type: string
+          nullable: true
+      required:
+        - name
+
+    Item:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        description:
+          type: string
+          nullable: true
+        category:
+          type: string
+          nullable: true
+        defaultPrice:
+          type: number
+          nullable: true
+        createdAt:
+          type: string
+          format: date-time
+      required:
+        - id
+        - name
+        - createdAt
+
+    CreateItem:
+      type: object
+      properties:
+        name:
+          type: string
+        description:
+          type: string
+          nullable: true
+        category:
+          type: string
+          nullable: true
+        defaultPrice:
+          type: number
+          nullable: true
+      required:
+        - name
+
+    PriceComparison:
+      type: object
+      properties:
+        id:
+          type: integer
+        itemId:
+          type: integer
+        supplierId:
+          type: integer
+        quotedPrice:
+          type: number
+        validUntil:
+          type: string
+          format: date-time
+          nullable: true
+        notes:
+          type: string
+          nullable: true
+        createdAt:
+          type: string
+          format: date-time
+        itemName:
+          type: string
+          nullable: true
+        supplierName:
+          type: string
+          nullable: true
+      required:
+        - id
+        - itemId
+        - supplierId
+        - quotedPrice
+        - createdAt
+
+    CreatePriceComparison:
+      type: object
+      properties:
+        itemId:
+          type: integer
+        supplierId:
+          type: integer
+        quotedPrice:
+          type: number
+        validUntil:
+          type: string
+          format: date-time
+          nullable: true
+        notes:
+          type: string
+          nullable: true
+      required:
+        - itemId
+        - supplierId
+        - quotedPrice
+
+    InventoryEntry:
+      type: object
+      properties:
+        id:
+          type: integer
+        itemId:
+          type: integer
+        quantityAvailable:
+          type: integer
+        safetyLevel:
+          type: integer
+        location:
+          type: string
+          nullable: true
+        updatedAt:
+          type: string
+          format: date-time
+        itemName:
+          type: string
+          nullable: true
+        isLowStock:
+          type: boolean
+      required:
+        - id
+        - itemId
+        - quantityAvailable
+        - safetyLevel
+        - updatedAt
+        - isLowStock
+
+    CreateInventoryEntry:
+      type: object
+      properties:
+        itemId:
+          type: integer
+        quantityAvailable:
+          type: integer
+        safetyLevel:
+          type: integer
+        location:
+          type: string
+          nullable: true
+      required:
+        - itemId
+        - quantityAvailable
+        - safetyLevel
+
+    StockMovement:
+      type: object
+      properties:
+        id:
+          type: integer
+        itemId:
+          type: integer
+        movementType:
+          type: string
+          enum: [in, out]
+        quantity:
+          type: integer
+        reference:
+          type: string
+          nullable: true
+        notes:
+          type: string
+          nullable: true
+        createdAt:
+          type: string
+          format: date-time
+        itemName:
+          type: string
+          nullable: true
+      required:
+        - id
+        - itemId
+        - movementType
+        - quantity
+        - createdAt
+
+    CreateStockMovement:
+      type: object
+      properties:
+        itemId:
+          type: integer
+        movementType:
+          type: string
+          enum: [in, out]
+        quantity:
+          type: integer
+        reference:
+          type: string
+          nullable: true
+        notes:
+          type: string
+          nullable: true
+      required:
+        - itemId
+        - movementType
+        - quantity
+
+    Customer:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        phone:
+          type: string
+          nullable: true
+        email:
+          type: string
+          nullable: true
+        deliverySuccessRate:
+          type: number
+          nullable: true
+        notes:
+          type: string
+          nullable: true
+        createdAt:
+          type: string
+          format: date-time
+      required:
+        - id
+        - name
+        - createdAt
+
+    CreateCustomer:
+      type: object
+      properties:
+        name:
+          type: string
+        phone:
+          type: string
+          nullable: true
+        email:
+          type: string
+          nullable: true
+        deliverySuccessRate:
+          type: number
+          nullable: true
+        notes:
+          type: string
+          nullable: true
+      required:
+        - name
+
+    Order:
+      type: object
+      properties:
+        id:
+          type: integer
+        customerId:
+          type: integer
+        status:
+          type: string
+          enum: [pending, confirmed, delivered, cancelled]
+        totalAmount:
+          type: number
+        notes:
+          type: string
+          nullable: true
+        createdAt:
+          type: string
+          format: date-time
+        customerName:
+          type: string
+          nullable: true
+      required:
+        - id
+        - customerId
+        - status
+        - totalAmount
+        - createdAt
+
+    OrderItem:
+      type: object
+      properties:
+        id:
+          type: integer
+        orderId:
+          type: integer
+        itemId:
+          type: integer
+        quantity:
+          type: integer
+        unitPrice:
+          type: number
+        itemName:
+          type: string
+          nullable: true
+      required:
+        - id
+        - orderId
+        - itemId
+        - quantity
+        - unitPrice
+
+    OrderDetail:
+      type: object
+      properties:
+        id:
+          type: integer
+        customerId:
+          type: integer
+        status:
+          type: string
+          enum: [pending, confirmed, delivered, cancelled]
+        totalAmount:
+          type: number
+        notes:
+          type: string
+          nullable: true
+        createdAt:
+          type: string
+          format: date-time
+        customerName:
+          type: string
+          nullable: true
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/OrderItem"
+      required:
+        - id
+        - customerId
+        - status
+        - totalAmount
+        - createdAt
+        - items
+
+    CreateOrder:
+      type: object
+      properties:
+        customerId:
+          type: integer
+        status:
+          type: string
+          enum: [pending, confirmed, delivered, cancelled]
+        notes:
+          type: string
+          nullable: true
+        items:
+          type: array
+          items:
+            type: object
+            properties:
+              itemId:
+                type: integer
+              quantity:
+                type: integer
+              unitPrice:
+                type: number
+            required:
+              - itemId
+              - quantity
+              - unitPrice
+      required:
+        - customerId
+        - items
+
+    UpdateOrder:
+      type: object
+      properties:
+        status:
+          type: string
+          enum: [pending, confirmed, delivered, cancelled]
+        notes:
+          type: string
+          nullable: true
+
+    Invoice:
+      type: object
+      properties:
+        id:
+          type: integer
+        orderId:
+          type: integer
+        invoiceNumber:
+          type: string
+        issuedAt:
+          type: string
+          format: date-time
+        total:
+          type: number
+        status:
+          type: string
+          enum: [draft, issued, paid, cancelled]
+        notes:
+          type: string
+          nullable: true
+        createdAt:
+          type: string
+          format: date-time
+        customerName:
+          type: string
+          nullable: true
+      required:
+        - id
+        - orderId
+        - invoiceNumber
+        - issuedAt
+        - total
+        - status
+        - createdAt
+
+    CreateInvoice:
+      type: object
+      properties:
+        orderId:
+          type: integer
+        invoiceNumber:
+          type: string
+        issuedAt:
+          type: string
+          format: date-time
+        total:
+          type: number
+        status:
+          type: string
+          enum: [draft, issued, paid, cancelled]
+        notes:
+          type: string
+          nullable: true
+      required:
+        - orderId
+        - invoiceNumber
+        - issuedAt
+        - total
+        - status
