@@ -1,7 +1,7 @@
 import { Router, type IRouter } from "express";
 import { db } from "@workspace/db";
 import { stockMovementsTable, itemsTable, inventoryTable } from "@workspace/db/schema";
-import { eq, sql } from "drizzle-orm";
+import { eq } from "drizzle-orm";
 
 const router: IRouter = Router();
 
@@ -105,10 +105,19 @@ router.get("/stock-movements/:id", async (req, res): Promise<void> => {
 router.put("/stock-movements/:id", async (req, res): Promise<void> => {
   try {
     const id = parseInt(req.params.id);
-    const { reference, notes } = req.body as { reference?: string; notes?: string };
+    const body = req.body as Record<string, unknown>;
+    const setPayload: Record<string, unknown> = {};
+    if (Object.prototype.hasOwnProperty.call(body, "reference")) setPayload.reference = body.reference;
+    if (Object.prototype.hasOwnProperty.call(body, "notes")) setPayload.notes = body.notes;
+
+    if (Object.keys(setPayload).length === 0) {
+      res.status(400).json({ error: "no fields to update" });
+      return;
+    }
+
     const [updated] = await db
       .update(stockMovementsTable)
-      .set({ reference, notes })
+      .set(setPayload)
       .where(eq(stockMovementsTable.id, id))
       .returning();
     if (!updated) {

@@ -64,16 +64,20 @@ router.get("/suppliers/:id", async (req, res): Promise<void> => {
 router.put("/suppliers/:id", async (req, res): Promise<void> => {
   try {
     const id = parseInt(req.params.id);
-    const { name, contactName, phone, email, address } = req.body as {
-      name?: string;
-      contactName?: string;
-      phone?: string;
-      email?: string;
-      address?: string;
-    };
+    const body = req.body as Record<string, unknown>;
+    const setPayload: Record<string, unknown> = {};
+    for (const key of ["name", "contactName", "phone", "email", "address"]) {
+      if (Object.prototype.hasOwnProperty.call(body, key)) setPayload[key] = body[key];
+    }
+
+    if (Object.keys(setPayload).length === 0) {
+      res.status(400).json({ error: "no fields to update" });
+      return;
+    }
+
     const [updated] = await db
       .update(suppliersTable)
-      .set({ name, contactName, phone, email, address })
+      .set(setPayload)
       .where(eq(suppliersTable.id, id))
       .returning();
     if (!updated) {

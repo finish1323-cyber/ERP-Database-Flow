@@ -4,7 +4,6 @@ import {
   useListInvoices, useCreateInvoice, useUpdateInvoice, useDeleteInvoice, getListInvoicesQueryKey,
   useListOrders,
   type Invoice, type InvoiceStatus,
-  InvoiceStatus as InvoiceStatusValues,
 } from "@workspace/api-client-react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
@@ -16,8 +15,6 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Badge } from "@/components/ui/badge";
 import { formatCurrency, formatDate } from "@/lib/format";
 import { format } from "date-fns";
-
-void InvoiceStatusValues;
 
 type InvoiceForm = {
   orderId: number;

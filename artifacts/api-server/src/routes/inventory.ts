@@ -90,15 +90,22 @@ router.get("/inventory/:id", async (req, res): Promise<void> => {
 router.put("/inventory/:id", async (req, res): Promise<void> => {
   try {
     const id = parseInt(req.params.id);
-    const { itemId, quantityAvailable, safetyLevel, location } = req.body as {
-      itemId?: number;
-      quantityAvailable?: number;
-      safetyLevel?: number;
-      location?: string;
-    };
+    const body = req.body as Record<string, unknown>;
+    const setPayload: Record<string, unknown> = { updatedAt: new Date() };
+    let hasFields = false;
+    for (const key of ["itemId", "quantityAvailable", "safetyLevel", "location"]) {
+      if (Object.prototype.hasOwnProperty.call(body, key)) {
+        setPayload[key] = body[key];
+        hasFields = true;
+      }
+    }
+    if (!hasFields) {
+      res.status(400).json({ error: "no fields to update" });
+      return;
+    }
     const [updated] = await db
       .update(inventoryTable)
-      .set({ itemId, quantityAvailable, safetyLevel, location, updatedAt: new Date() })
+      .set(setPayload)
       .where(eq(inventoryTable.id, id))
       .returning();
     if (!updated) {
