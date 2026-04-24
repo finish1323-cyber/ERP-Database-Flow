@@ -67,19 +67,23 @@ router.post("/orders", async (req, res): Promise<void> => {
 
     const totalAmount = items.reduce((sum, item) => sum + item.quantity * item.unitPrice, 0);
 
-    const [order] = await db
-      .insert(ordersTable)
-      .values({ customerId, status, notes, totalAmount: totalAmount.toString() })
-      .returning();
+    const order = await db.transaction(async (tx) => {
+      const [createdOrder] = await tx
+        .insert(ordersTable)
+        .values({ customerId, status, notes, totalAmount: totalAmount.toString() })
+        .returning();
 
-    await db.insert(orderItemsTable).values(
-      items.map((item) => ({
-        orderId: order.id,
-        itemId: item.itemId,
-        quantity: item.quantity,
-        unitPrice: item.unitPrice.toString(),
-      }))
-    );
+      await tx.insert(orderItemsTable).values(
+        items.map((item) => ({
+          orderId: createdOrder.id,
+          itemId: item.itemId,
+          quantity: item.quantity,
+          unitPrice: item.unitPrice.toString(),
+        }))
+      );
+
+      return createdOrder;
+    });
 
     res.status(201).json({ ...serializeOrder(order), customerName: null });
   } catch (err) {
