@@ -24,6 +24,34 @@ export interface DashboardStats {
   totalRevenue: number;
 }
 
+export interface MonthlySalesPoint {
+  /** Month in YYYY-MM format */
+  month: string;
+  total: number;
+  count: number;
+}
+
+export interface MonthlyPurchasesPoint {
+  /** Month in YYYY-MM format */
+  month: string;
+  quantity: number;
+  count: number;
+}
+
+export interface TopItem {
+  itemId: number;
+  itemName: string;
+  totalQuantity: number;
+  totalRevenue: number;
+}
+
+export interface TopCustomer {
+  customerId: number;
+  customerName: string;
+  totalRevenue: number;
+  ordersCount: number;
+}
+
 export interface Supplier {
   id: number;
   name: string;

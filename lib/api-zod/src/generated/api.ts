@@ -30,6 +30,56 @@ export const GetDashboardStatsResponse = zod.object({
 });
 
 /**
+ * @summary Get monthly sales trend for the last 12 months
+ */
+export const GetDashboardMonthlySalesResponseItem = zod.object({
+  month: zod.string().describe("Month in YYYY-MM format"),
+  total: zod.number(),
+  count: zod.number(),
+});
+export const GetDashboardMonthlySalesResponse = zod.array(
+  GetDashboardMonthlySalesResponseItem,
+);
+
+/**
+ * @summary Get monthly stock-in (purchases) trend for the last 12 months
+ */
+export const GetDashboardMonthlyPurchasesResponseItem = zod.object({
+  month: zod.string().describe("Month in YYYY-MM format"),
+  quantity: zod.number(),
+  count: zod.number(),
+});
+export const GetDashboardMonthlyPurchasesResponse = zod.array(
+  GetDashboardMonthlyPurchasesResponseItem,
+);
+
+/**
+ * @summary Get top items by quantity sold
+ */
+export const GetDashboardTopItemsResponseItem = zod.object({
+  itemId: zod.number(),
+  itemName: zod.string(),
+  totalQuantity: zod.number(),
+  totalRevenue: zod.number(),
+});
+export const GetDashboardTopItemsResponse = zod.array(
+  GetDashboardTopItemsResponseItem,
+);
+
+/**
+ * @summary Get top customers by revenue
+ */
+export const GetDashboardTopCustomersResponseItem = zod.object({
+  customerId: zod.number(),
+  customerName: zod.string(),
+  totalRevenue: zod.number(),
+  ordersCount: zod.number(),
+});
+export const GetDashboardTopCustomersResponse = zod.array(
+  GetDashboardTopCustomersResponseItem,
+);
+
+/**
  * @summary List all suppliers
  */
 export const ListSuppliersQueryParams = zod.object({

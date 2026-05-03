@@ -57,6 +57,66 @@ paths:
               schema:
                 $ref: "#/components/schemas/DashboardStats"
 
+  /dashboard/analytics/monthly-sales:
+    get:
+      operationId: getDashboardMonthlySales
+      tags: [dashboard]
+      summary: Get monthly sales trend for the last 12 months
+      responses:
+        "200":
+          description: Monthly sales data
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/MonthlySalesPoint"
+
+  /dashboard/analytics/monthly-purchases:
+    get:
+      operationId: getDashboardMonthlyPurchases
+      tags: [dashboard]
+      summary: Get monthly stock-in (purchases) trend for the last 12 months
+      responses:
+        "200":
+          description: Monthly purchases data
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/MonthlyPurchasesPoint"
+
+  /dashboard/analytics/top-items:
+    get:
+      operationId: getDashboardTopItems
+      tags: [dashboard]
+      summary: Get top items by quantity sold
+      responses:
+        "200":
+          description: Top items
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/TopItem"
+
+  /dashboard/analytics/top-customers:
+    get:
+      operationId: getDashboardTopCustomers
+      tags: [dashboard]
+      summary: Get top customers by revenue
+      responses:
+        "200":
+          description: Top customers
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/TopCustomer"
+
   # Suppliers
   /suppliers:
     get:
@@ -919,6 +979,70 @@ components:
         - lowStockCount
         - pendingOrdersCount
         - totalRevenue
+
+    MonthlySalesPoint:
+      type: object
+      properties:
+        month:
+          type: string
+          description: "Month in YYYY-MM format"
+        total:
+          type: number
+        count:
+          type: integer
+      required:
+        - month
+        - total
+        - count
+
+    MonthlyPurchasesPoint:
+      type: object
+      properties:
+        month:
+          type: string
+          description: "Month in YYYY-MM format"
+        quantity:
+          type: integer
+        count:
+          type: integer
+      required:
+        - month
+        - quantity
+        - count
+
+    TopItem:
+      type: object
+      properties:
+        itemId:
+          type: integer
+        itemName:
+          type: string
+        totalQuantity:
+          type: integer
+        totalRevenue:
+          type: number
+      required:
+        - itemId
+        - itemName
+        - totalQuantity
+        - totalRevenue
+
+    TopCustomer:
+      type: object
+      properties:
+        customerId:
+          type: integer
+        customerName:
+          type: string
+        totalRevenue:
+          type: number
+        ordersCount:
+          type: integer
+      required:
+        - customerId
+        - customerName
+        - totalRevenue
+        - ordersCount
 
     Supplier:
       type: object

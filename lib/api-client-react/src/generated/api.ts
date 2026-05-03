@@ -40,11 +40,15 @@ import type {
   ListPriceComparisonsParams,
   ListStockMovementsParams,
   ListSuppliersParams,
+  MonthlyPurchasesPoint,
+  MonthlySalesPoint,
   Order,
   OrderDetail,
   PriceComparison,
   StockMovement,
   Supplier,
+  TopCustomer,
+  TopItem,
   UpdateOrder,
   UpdateStockMovement,
 } from "./api.schemas";
@@ -201,6 +205,313 @@ export function useGetDashboardStats<
   request?: SecondParameter<typeof customFetch>;
 }): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
   const queryOptions = getGetDashboardStatsQueryOptions(options);
+
+  const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
+    queryKey: QueryKey;
+  };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+/**
+ * @summary Get monthly sales trend for the last 12 months
+ */
+export const getGetDashboardMonthlySalesUrl = () => {
+  return `/api/dashboard/analytics/monthly-sales`;
+};
+
+export const getDashboardMonthlySales = async (
+  options?: RequestInit,
+): Promise<MonthlySalesPoint[]> => {
+  return customFetch<MonthlySalesPoint[]>(getGetDashboardMonthlySalesUrl(), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export const getGetDashboardMonthlySalesQueryKey = () => {
+  return [`/api/dashboard/analytics/monthly-sales`] as const;
+};
+
+export const getGetDashboardMonthlySalesQueryOptions = <
+  TData = Awaited<ReturnType<typeof getDashboardMonthlySales>>,
+  TError = ErrorType<unknown>,
+>(options?: {
+  query?: UseQueryOptions<
+    Awaited<ReturnType<typeof getDashboardMonthlySales>>,
+    TError,
+    TData
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey =
+    queryOptions?.queryKey ?? getGetDashboardMonthlySalesQueryKey();
+
+  const queryFn: QueryFunction<
+    Awaited<ReturnType<typeof getDashboardMonthlySales>>
+  > = ({ signal }) => getDashboardMonthlySales({ signal, ...requestOptions });
+
+  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof getDashboardMonthlySales>>,
+    TError,
+    TData
+  > & { queryKey: QueryKey };
+};
+
+export type GetDashboardMonthlySalesQueryResult = NonNullable<
+  Awaited<ReturnType<typeof getDashboardMonthlySales>>
+>;
+export type GetDashboardMonthlySalesQueryError = ErrorType<unknown>;
+
+/**
+ * @summary Get monthly sales trend for the last 12 months
+ */
+
+export function useGetDashboardMonthlySales<
+  TData = Awaited<ReturnType<typeof getDashboardMonthlySales>>,
+  TError = ErrorType<unknown>,
+>(options?: {
+  query?: UseQueryOptions<
+    Awaited<ReturnType<typeof getDashboardMonthlySales>>,
+    TError,
+    TData
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+  const queryOptions = getGetDashboardMonthlySalesQueryOptions(options);
+
+  const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
+    queryKey: QueryKey;
+  };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+/**
+ * @summary Get monthly stock-in (purchases) trend for the last 12 months
+ */
+export const getGetDashboardMonthlyPurchasesUrl = () => {
+  return `/api/dashboard/analytics/monthly-purchases`;
+};
+
+export const getDashboardMonthlyPurchases = async (
+  options?: RequestInit,
+): Promise<MonthlyPurchasesPoint[]> => {
+  return customFetch<MonthlyPurchasesPoint[]>(
+    getGetDashboardMonthlyPurchasesUrl(),
+    {
+      ...options,
+      method: "GET",
+    },
+  );
+};
+
+export const getGetDashboardMonthlyPurchasesQueryKey = () => {
+  return [`/api/dashboard/analytics/monthly-purchases`] as const;
+};
+
+export const getGetDashboardMonthlyPurchasesQueryOptions = <
+  TData = Awaited<ReturnType<typeof getDashboardMonthlyPurchases>>,
+  TError = ErrorType<unknown>,
+>(options?: {
+  query?: UseQueryOptions<
+    Awaited<ReturnType<typeof getDashboardMonthlyPurchases>>,
+    TError,
+    TData
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey =
+    queryOptions?.queryKey ?? getGetDashboardMonthlyPurchasesQueryKey();
+
+  const queryFn: QueryFunction<
+    Awaited<ReturnType<typeof getDashboardMonthlyPurchases>>
+  > = ({ signal }) =>
+    getDashboardMonthlyPurchases({ signal, ...requestOptions });
+
+  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof getDashboardMonthlyPurchases>>,
+    TError,
+    TData
+  > & { queryKey: QueryKey };
+};
+
+export type GetDashboardMonthlyPurchasesQueryResult = NonNullable<
+  Awaited<ReturnType<typeof getDashboardMonthlyPurchases>>
+>;
+export type GetDashboardMonthlyPurchasesQueryError = ErrorType<unknown>;
+
+/**
+ * @summary Get monthly stock-in (purchases) trend for the last 12 months
+ */
+
+export function useGetDashboardMonthlyPurchases<
+  TData = Awaited<ReturnType<typeof getDashboardMonthlyPurchases>>,
+  TError = ErrorType<unknown>,
+>(options?: {
+  query?: UseQueryOptions<
+    Awaited<ReturnType<typeof getDashboardMonthlyPurchases>>,
+    TError,
+    TData
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+  const queryOptions = getGetDashboardMonthlyPurchasesQueryOptions(options);
+
+  const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
+    queryKey: QueryKey;
+  };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+/**
+ * @summary Get top items by quantity sold
+ */
+export const getGetDashboardTopItemsUrl = () => {
+  return `/api/dashboard/analytics/top-items`;
+};
+
+export const getDashboardTopItems = async (
+  options?: RequestInit,
+): Promise<TopItem[]> => {
+  return customFetch<TopItem[]>(getGetDashboardTopItemsUrl(), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export const getGetDashboardTopItemsQueryKey = () => {
+  return [`/api/dashboard/analytics/top-items`] as const;
+};
+
+export const getGetDashboardTopItemsQueryOptions = <
+  TData = Awaited<ReturnType<typeof getDashboardTopItems>>,
+  TError = ErrorType<unknown>,
+>(options?: {
+  query?: UseQueryOptions<
+    Awaited<ReturnType<typeof getDashboardTopItems>>,
+    TError,
+    TData
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getGetDashboardTopItemsQueryKey();
+
+  const queryFn: QueryFunction<
+    Awaited<ReturnType<typeof getDashboardTopItems>>
+  > = ({ signal }) => getDashboardTopItems({ signal, ...requestOptions });
+
+  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof getDashboardTopItems>>,
+    TError,
+    TData
+  > & { queryKey: QueryKey };
+};
+
+export type GetDashboardTopItemsQueryResult = NonNullable<
+  Awaited<ReturnType<typeof getDashboardTopItems>>
+>;
+export type GetDashboardTopItemsQueryError = ErrorType<unknown>;
+
+/**
+ * @summary Get top items by quantity sold
+ */
+
+export function useGetDashboardTopItems<
+  TData = Awaited<ReturnType<typeof getDashboardTopItems>>,
+  TError = ErrorType<unknown>,
+>(options?: {
+  query?: UseQueryOptions<
+    Awaited<ReturnType<typeof getDashboardTopItems>>,
+    TError,
+    TData
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+  const queryOptions = getGetDashboardTopItemsQueryOptions(options);
+
+  const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
+    queryKey: QueryKey;
+  };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+/**
+ * @summary Get top customers by revenue
+ */
+export const getGetDashboardTopCustomersUrl = () => {
+  return `/api/dashboard/analytics/top-customers`;
+};
+
+export const getDashboardTopCustomers = async (
+  options?: RequestInit,
+): Promise<TopCustomer[]> => {
+  return customFetch<TopCustomer[]>(getGetDashboardTopCustomersUrl(), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export const getGetDashboardTopCustomersQueryKey = () => {
+  return [`/api/dashboard/analytics/top-customers`] as const;
+};
+
+export const getGetDashboardTopCustomersQueryOptions = <
+  TData = Awaited<ReturnType<typeof getDashboardTopCustomers>>,
+  TError = ErrorType<unknown>,
+>(options?: {
+  query?: UseQueryOptions<
+    Awaited<ReturnType<typeof getDashboardTopCustomers>>,
+    TError,
+    TData
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey =
+    queryOptions?.queryKey ?? getGetDashboardTopCustomersQueryKey();
+
+  const queryFn: QueryFunction<
+    Awaited<ReturnType<typeof getDashboardTopCustomers>>
+  > = ({ signal }) => getDashboardTopCustomers({ signal, ...requestOptions });
+
+  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof getDashboardTopCustomers>>,
+    TError,
+    TData
+  > & { queryKey: QueryKey };
+};
+
+export type GetDashboardTopCustomersQueryResult = NonNullable<
+  Awaited<ReturnType<typeof getDashboardTopCustomers>>
+>;
+export type GetDashboardTopCustomersQueryError = ErrorType<unknown>;
+
+/**
+ * @summary Get top customers by revenue
+ */
+
+export function useGetDashboardTopCustomers<
+  TData = Awaited<ReturnType<typeof getDashboardTopCustomers>>,
+  TError = ErrorType<unknown>,
+>(options?: {
+  query?: UseQueryOptions<
+    Awaited<ReturnType<typeof getDashboardTopCustomers>>,
+    TError,
+    TData
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+  const queryOptions = getGetDashboardTopCustomersQueryOptions(options);
 
   const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
     queryKey: QueryKey;
