@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import {
   useListInvoices, useCreateInvoice, useUpdateInvoice, useDeleteInvoice, getListInvoicesQueryKey,
-  useListOrders,
+  useListOrders, getOrder,
   type Invoice, type InvoiceStatus,
 } from "@workspace/api-client-react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -15,6 +15,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Badge } from "@/components/ui/badge";
 import { formatCurrency, formatDate } from "@/lib/format";
 import { format } from "date-fns";
+import { generateInvoicePdf } from "@/lib/generate-invoice-pdf";
 
 type InvoiceForm = {
   orderId: number;
@@ -43,6 +44,19 @@ export function Sales() {
   const [editingInv, setEditingInv] = useState<Invoice | null>(null);
   const [statusVal, setStatusVal] = useState<InvoiceStatus>("draft");
   const [formData, setFormData] = useState<InvoiceForm>(newInvoiceForm);
+  const [printingId, setPrintingId] = useState<number | null>(null);
+
+  const handlePrint = async (inv: Invoice) => {
+    setPrintingId(inv.id);
+    try {
+      const order = await getOrder(inv.orderId);
+      await generateInvoicePdf(inv, order);
+    } catch {
+      toast({ title: "تعذّر إنشاء ملف PDF", variant: "destructive" });
+    } finally {
+      setPrintingId(null);
+    }
+  };
 
   const createMut = useCreateInvoice({ mutation: { onSuccess: () => { queryClient.invalidateQueries({ queryKey: getListInvoicesQueryKey() }); toast({ title: "تم إصدار الفاتورة" }); setAddOpen(false); } } });
   const updateMut = useUpdateInvoice({ mutation: { onSuccess: () => { queryClient.invalidateQueries({ queryKey: getListInvoicesQueryKey() }); toast({ title: "تم التحديث" }); setEditOpen(false); } } });
@@ -147,7 +161,11 @@ export function Sales() {
                     <TableCell className="text-left">
                       <div className="flex justify-end gap-2">
                         <Button variant="outline" size="sm" onClick={() => { setEditingInv(inv); setStatusVal(inv.status); setEditOpen(true); }}>تغيير الحالة</Button>
-                        <Button variant="ghost" size="icon" onClick={() => window.print()}><Printer className="w-4 h-4 text-slate-600" /></Button>
+                        <Button variant="ghost" size="icon" disabled={printingId === inv.id} onClick={() => handlePrint(inv)} title="تحميل PDF">
+                          {printingId === inv.id
+                            ? <span className="w-4 h-4 border-2 border-slate-400 border-t-transparent rounded-full animate-spin inline-block" />
+                            : <Printer className="w-4 h-4 text-slate-600" />}
+                        </Button>
                         <Button variant="ghost" size="icon" onClick={() => { if (confirm("حذف؟")) deleteMut.mutate({ id: inv.id }); }}><Trash2 className="w-4 h-4 text-red-600" /></Button>
                       </div>
                     </TableCell>
