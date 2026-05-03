@@ -11,8 +11,10 @@ import {
   Building2,
   Menu
 } from "lucide-react";
+import { useQueryClient } from "@tanstack/react-query";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
+import { clearAuth } from "@/lib/auth";
 
 const NAV_ITEMS = [
   { href: "/", label: "لوحة التحكم", icon: LayoutDashboard },
@@ -24,6 +26,12 @@ const NAV_ITEMS = [
 
 export function AppLayout({ children }: { children: ReactNode }) {
   const [location] = useLocation();
+  const queryClient = useQueryClient();
+
+  const handleSignOut = () => {
+    clearAuth();
+    queryClient.clear();
+  };
 
   const NavLinks = () => (
     <div className="flex flex-col gap-2 mt-8 w-full">
@@ -61,7 +69,12 @@ export function AppLayout({ children }: { children: ReactNode }) {
           <NavLinks />
         </nav>
         <div className="p-4 border-t border-border/50">
-          <button className="flex items-center gap-3 w-full px-4 py-3 rounded-xl text-muted-foreground hover:bg-destructive/10 hover:text-destructive transition-colors duration-200">
+          <button
+            type="button"
+            onClick={handleSignOut}
+            data-testid="button-sign-out"
+            className="flex items-center gap-3 w-full px-4 py-3 rounded-xl text-muted-foreground hover:bg-destructive/10 hover:text-destructive transition-colors duration-200"
+          >
             <LogOut className="w-5 h-5" />
             <span className="font-medium">تسجيل الخروج</span>
           </button>
@@ -91,6 +104,17 @@ export function AppLayout({ children }: { children: ReactNode }) {
               <nav className="flex-1 px-4 py-2 overflow-y-auto">
                 <NavLinks />
               </nav>
+              <div className="p-4 border-t border-border/50">
+                <button
+                  type="button"
+                  onClick={handleSignOut}
+                  data-testid="button-sign-out-mobile"
+                  className="flex items-center gap-3 w-full px-4 py-3 rounded-xl text-muted-foreground hover:bg-destructive/10 hover:text-destructive transition-colors duration-200"
+                >
+                  <LogOut className="w-5 h-5" />
+                  <span className="font-medium">تسجيل الخروج</span>
+                </button>
+              </div>
             </SheetContent>
           </Sheet>
         </header>

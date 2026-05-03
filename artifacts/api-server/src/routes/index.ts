@@ -1,5 +1,6 @@
 import { Router, type IRouter } from "express";
 import healthRouter from "./health";
+import authRouter from "./auth";
 import suppliersRouter from "./suppliers";
 import itemsRouter from "./items";
 import priceComparisonsRouter from "./price-comparisons";
@@ -9,10 +10,17 @@ import customersRouter from "./customers";
 import ordersRouter from "./orders";
 import invoicesRouter from "./invoices";
 import dashboardRouter from "./dashboard";
+import { requireAuth } from "../middlewares/require-auth";
 
 const router: IRouter = Router();
 
+// Public routes — must remain unauthenticated.
 router.use(healthRouter);
+router.use(authRouter);
+
+// Everything below requires a valid session token.
+router.use(requireAuth);
+
 router.use(dashboardRouter);
 router.use(suppliersRouter);
 router.use(itemsRouter);

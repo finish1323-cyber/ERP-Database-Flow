@@ -61,9 +61,27 @@ The ERP system covers 4 core departments (5th pending user input):
 5. **Dashboard** — `/`
    - Summary stats cards at `/api/dashboard/stats`
 
+## Authentication
+
+All ERP routes (frontend and API) require sign-in. Auth is a simple shared **team password**.
+
+- Login screen: shown by `artifacts/erp-app/src/pages/Login.tsx` whenever no session token is in `localStorage`.
+- Backend auth lives in `artifacts/api-server/src/lib/auth.ts` (HMAC-signed session tokens, 7-day TTL) and `artifacts/api-server/src/middlewares/require-auth.ts`.
+- Public API routes: `GET /api/healthz`, `POST /api/auth/login`, `POST /api/auth/logout`, `GET /api/auth/me`. Everything else is gated behind `requireAuth`.
+- Frontend wires `setAuthTokenGetter` so the generated React Query hooks send `Authorization: Bearer <token>`. A 401 response auto-clears the token and bounces back to the login screen.
+- Sign-out lives in the sidebar (desktop + mobile) inside `AppLayout.tsx`.
+
+### Required env vars
+
+| Var | Purpose | Default |
+| --- | --- | --- |
+| `TEAM_PASSWORD` | Shared sign-in password. **Required** — when missing, every login attempt is rejected with HTTP 503 and the server logs an error. | (none) |
+| `SESSION_SECRET` | HMAC key for session tokens. | Auto-generated per process if missing (sessions don't survive restart). |
+
 ## API Endpoints
 
 All endpoints served under `/api`:
+- `POST /api/auth/login` (public), `POST /api/auth/logout`, `GET /api/auth/me`
 - `GET /api/dashboard/stats`
 - `GET|POST /api/suppliers`, `GET|PUT|DELETE /api/suppliers/:id`
 - `GET|POST /api/items`, `GET|PUT|DELETE /api/items/:id`
