@@ -1,25 +1,44 @@
 import { useEffect, useState } from "react";
 import { getAuthToken, subscribeAuth, clearAuth } from "@/lib/auth";
 
+export type UserRole = "admin" | "purchasing" | "sales" | "warehouse";
+
+export interface AuthInfo {
+  sub: string;
+  role: UserRole;
+  name: string;
+  employeeId: number | null;
+  exp: number;
+}
+
 type AuthState =
   | { status: "loading" }
-  | { status: "authenticated"; token: string }
+  | { status: "authenticated"; token: string; info: AuthInfo }
   | { status: "unauthenticated" };
 
 const BASE = import.meta.env.BASE_URL;
 
-async function validateToken(token: string): Promise<boolean> {
+async function validateToken(token: string): Promise<AuthInfo | null> {
   try {
     const res = await fetch(`${BASE}api/auth/me`, {
       headers: { authorization: `Bearer ${token}` },
     });
     if (res.status === 401) {
       clearAuth();
-      return false;
+      return null;
     }
-    return res.ok;
+    if (!res.ok) return null;
+    const data = await res.json() as { authenticated: boolean; sub: string; role: string; name: string; employeeId: number | null; exp: number };
+    if (!data.authenticated) return null;
+    return {
+      sub: data.sub,
+      role: (data.role as UserRole) || "sales",
+      name: data.name || "",
+      employeeId: data.employeeId ?? null,
+      exp: data.exp,
+    };
   } catch {
-    return false;
+    return null;
   }
 }
 
@@ -39,22 +58,18 @@ export function useAuthState(): AuthState {
         return;
       }
       setState({ status: "loading" });
-      validateToken(token).then((valid) => {
+      validateToken(token).then((info) => {
         if (cancelled) return;
-        if (valid) {
-          setState({ status: "authenticated", token });
+        if (info) {
+          setState({ status: "authenticated", token, info });
         } else {
           setState({ status: "unauthenticated" });
         }
       });
     }
 
-    // Validate whatever token exists (or not) at mount time.
     applyToken(getAuthToken());
-
-    // Always subscribe so future login/logout changes propagate.
     const unsubscribe = subscribeAuth(applyToken);
-
     return () => {
       cancelled = true;
       unsubscribe();

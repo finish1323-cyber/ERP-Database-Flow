@@ -1,44 +1,54 @@
 import { Router, type IRouter } from "express";
+import { db } from "@workspace/db";
+import { employeesTable } from "@workspace/db/schema";
+import { eq } from "drizzle-orm";
 import {
-  isAuthConfigured,
   issueSessionToken,
-  verifyTeamPassword,
   verifySessionToken,
+  verifyPassword,
+  verifyTeamPassword,
+  type UserRole,
 } from "../lib/auth";
 
 const router: IRouter = Router();
 
-router.post("/auth/login", (req, res) => {
-  const body = req.body as { password?: unknown } | undefined;
+router.post("/auth/login", async (req, res): Promise<void> => {
+  const body = req.body as { email?: unknown; password?: unknown } | undefined;
+  const email = typeof body?.email === "string" ? body.email.trim() : "";
   const password = typeof body?.password === "string" ? body.password : "";
 
-  if (!password) {
-    res.status(400).json({
-      error: "password_required",
-      message: "يرجى إدخال كلمة المرور.",
-    });
+  if (!email || !password) {
+    res.status(400).json({ error: "credentials_required", message: "يرجى إدخال البريد الإلكتروني وكلمة المرور." });
     return;
   }
 
-  if (!isAuthConfigured()) {
-    res.status(503).json({
-      error: "auth_not_configured",
-      message:
-        "تسجيل الدخول غير مُعدّ بعد. يرجى ضبط TEAM_PASSWORD في إعدادات الأسرار.",
-    });
+  // Try employee lookup first
+  const [employee] = await db.select().from(employeesTable).where(eq(employeesTable.email, email));
+
+  if (employee) {
+    if (!employee.isActive) {
+      res.status(403).json({ error: "account_disabled", message: "هذا الحساب موقوف. يرجى التواصل مع المدير." });
+      return;
+    }
+    const valid = await verifyPassword(password, employee.passwordHash);
+    if (!valid) {
+      res.status(401).json({ error: "invalid_credentials", message: "البريد الإلكتروني أو كلمة المرور غير صحيحة." });
+      return;
+    }
+    const token = issueSessionToken(String(employee.id), employee.role as UserRole, employee.name, employee.id);
+    res.json({ token, role: employee.role, name: employee.name });
     return;
   }
 
-  if (!verifyTeamPassword(password)) {
-    res.status(401).json({
-      error: "invalid_credentials",
-      message: "كلمة المرور غير صحيحة.",
-    });
+  // Fallback: TEAM_PASSWORD for bootstrap admin when no employee accounts exist
+  const [anyEmployee] = await db.select({ id: employeesTable.id }).from(employeesTable).limit(1);
+  if (!anyEmployee && verifyTeamPassword(password)) {
+    const token = issueSessionToken("team", "admin", "المدير", null);
+    res.json({ token, role: "admin", name: "المدير" });
     return;
   }
 
-  const token = issueSessionToken();
-  res.json({ token });
+  res.status(401).json({ error: "invalid_credentials", message: "البريد الإلكتروني أو كلمة المرور غير صحيحة." });
 });
 
 router.post("/auth/logout", (_req, res) => {
@@ -48,17 +58,20 @@ router.post("/auth/logout", (_req, res) => {
 router.get("/auth/me", (req, res) => {
   const header = req.headers["authorization"];
   const token =
-    typeof header === "string" && header.toLowerCase().startsWith("bearer ")
-      ? header.slice(7).trim()
-      : "";
-
+    typeof header === "string" && header.toLowerCase().startsWith("bearer ") ? header.slice(7).trim() : "";
   const session = token ? verifySessionToken(token) : null;
   if (!session) {
     res.status(401).json({ authenticated: false });
     return;
   }
-
-  res.json({ authenticated: true, sub: session.sub, exp: session.exp });
+  res.json({
+    authenticated: true,
+    sub: session.sub,
+    role: session.role,
+    name: session.name,
+    employeeId: session.employeeId,
+    exp: session.exp,
+  });
 });
 
 export default router;

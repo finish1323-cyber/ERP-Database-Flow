@@ -16,6 +16,7 @@ import { Badge } from "@/components/ui/badge";
 import { formatCurrency, formatDate } from "@/lib/format";
 import { format } from "date-fns";
 import { generateInvoicePdf } from "@/lib/generate-invoice-pdf";
+import { getCompanyProfile } from "@/lib/settings-api";
 
 type InvoiceForm = {
   orderId: number;
@@ -49,8 +50,8 @@ export function Sales() {
   const handlePrint = async (inv: Invoice) => {
     setPrintingId(inv.id);
     try {
-      const order = await getOrder(inv.orderId);
-      await generateInvoicePdf(inv, order);
+      const [order, company] = await Promise.all([getOrder(inv.orderId), getCompanyProfile().catch(() => undefined)]);
+      await generateInvoicePdf(inv, order, company);
     } catch {
       toast({ title: "تعذّر إنشاء ملف PDF", variant: "destructive" });
     } finally {

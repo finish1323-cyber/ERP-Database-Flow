@@ -2,6 +2,17 @@ import jsPDF from "jspdf";
 import html2canvas from "html2canvas";
 import type { Invoice, OrderDetail } from "@workspace/api-client-react";
 
+export interface CompanyInfo {
+  name?: string | null;
+  activity?: string | null;
+  address?: string | null;
+  phone?: string | null;
+  taxId?: string | null;
+  commercialReg?: string | null;
+  currency?: string | null;
+  logoData?: string | null;
+}
+
 function escapeHtml(value: string | null | undefined): string {
   if (value == null) return "";
   return value
@@ -12,64 +23,48 @@ function escapeHtml(value: string | null | undefined): string {
     .replace(/'/g, "&#x27;");
 }
 
-function formatCurrencyPdf(amount: number | null | undefined): string {
-  if (amount == null) return "0.00 ج.م";
-  return new Intl.NumberFormat("ar-EG", {
-    style: "currency",
-    currency: "EGP",
-  }).format(amount);
+function formatCurrencyPdf(amount: number | null | undefined, currency = "EGP"): string {
+  if (amount == null) return "0.00";
+  const currencyCode = currency || "EGP";
+  try {
+    return new Intl.NumberFormat("ar-EG", { style: "currency", currency: currencyCode }).format(amount);
+  } catch {
+    return `${amount.toFixed(2)} ${currencyCode}`;
+  }
 }
 
 function formatDatePdf(dateString: string | null | undefined): string {
   if (!dateString) return "-";
   try {
-    return new Intl.DateTimeFormat("ar-EG", {
-      year: "numeric",
-      month: "long",
-      day: "numeric",
-    }).format(new Date(dateString));
+    return new Intl.DateTimeFormat("ar-EG", { year: "numeric", month: "long", day: "numeric" }).format(new Date(dateString));
   } catch {
     return escapeHtml(dateString);
   }
 }
 
 function getInvoiceStatusLabel(status: string): string {
-  const map: Record<string, string> = {
-    draft: "مسودة",
-    issued: "مصدرة",
-    paid: "مدفوعة",
-    cancelled: "ملغاة",
-  };
+  const map: Record<string, string> = { draft: "مسودة", issued: "مصدرة", paid: "مدفوعة", cancelled: "ملغاة" };
   return map[status] ?? escapeHtml(status);
 }
 
 function getOrderStatusLabel(status: string): string {
-  const map: Record<string, string> = {
-    pending: "قيد الانتظار",
-    confirmed: "مؤكد",
-    delivered: "مُسلَّم",
-    cancelled: "ملغى",
-  };
+  const map: Record<string, string> = { pending: "قيد الانتظار", confirmed: "مؤكد", delivered: "مُسلَّم", cancelled: "ملغى" };
   return map[status] ?? escapeHtml(status);
 }
 
 function getStatusColor(status: string): string {
-  const map: Record<string, string> = {
-    draft: "#6b7280",
-    issued: "#2563eb",
-    paid: "#16a34a",
-    cancelled: "#dc2626",
-  };
+  const map: Record<string, string> = { draft: "#6b7280", issued: "#2563eb", paid: "#16a34a", cancelled: "#dc2626" };
   return map[status] ?? "#6b7280";
 }
 
-function buildInvoiceHTML(invoice: Invoice, order: OrderDetail): string {
+function buildInvoiceHTML(invoice: Invoice, order: OrderDetail, company?: CompanyInfo): string {
   const items = order.items ?? [];
   const subtotal = items.reduce((sum, item) => {
     const price = typeof item.unitPrice === "string" ? parseFloat(item.unitPrice) : item.unitPrice;
     return sum + item.quantity * price;
   }, 0);
   const total = typeof invoice.total === "string" ? parseFloat(invoice.total) : invoice.total;
+  const currency = company?.currency || "EGP";
 
   const safeInvoiceNumber = escapeHtml(invoice.invoiceNumber);
   const safeCustomerName = escapeHtml(invoice.customerName) || "—";
@@ -80,38 +75,50 @@ function buildInvoiceHTML(invoice: Invoice, order: OrderDetail): string {
   const issuedAtFormatted = formatDatePdf(invoice.issuedAt);
   const orderStatusLabel = getOrderStatusLabel(order.status);
 
-  const itemRows = items.length > 0
-    ? items.map((item) => {
-        const price = typeof item.unitPrice === "string" ? parseFloat(item.unitPrice) : item.unitPrice;
-        const lineTotal = item.quantity * price;
-        const safeItemName = escapeHtml(item.itemName) || `صنف #${Number(item.itemId)}`;
-        const safeQty = Number(item.quantity);
-        return `
+  const companyName = company?.name ? escapeHtml(company.name) : "نظام ERP الداخلي";
+  const companyActivity = company?.activity ? escapeHtml(company.activity) : "نظام إدارة الموارد المؤسسية";
+  const companyAddress = company?.address ? escapeHtml(company.address) : "";
+  const companyPhone = company?.phone ? escapeHtml(company.phone) : "";
+  const companyTaxId = company?.taxId ? escapeHtml(company.taxId) : "";
+  const companyCommercialReg = company?.commercialReg ? escapeHtml(company.commercialReg) : "";
+
+  const logoHtml = company?.logoData
+    ? `<img src="${company.logoData}" alt="logo" style="max-height: 64px; max-width: 160px; object-fit: contain; margin-bottom: 8px;" />`
+    : "";
+
+  const companyMetaLines = [companyAddress, companyPhone && `هاتف: ${companyPhone}`, companyTaxId && `البطاقة الضريبية: ${companyTaxId}`, companyCommercialReg && `السجل التجاري: ${companyCommercialReg}`]
+    .filter(Boolean)
+    .map((line) => `<div style="font-size: 12px; color: #64748b; margin-top: 2px;">${line}</div>`)
+    .join("");
+
+  const itemRows =
+    items.length > 0
+      ? items
+          .map((item) => {
+            const price = typeof item.unitPrice === "string" ? parseFloat(item.unitPrice) : item.unitPrice;
+            const lineTotal = item.quantity * price;
+            const safeItemName = escapeHtml(item.itemName) || `صنف #${Number(item.itemId)}`;
+            const safeQty = Number(item.quantity);
+            return `
           <tr>
             <td style="padding: 10px 14px; border-bottom: 1px solid #f1f5f9; text-align: right;">${safeItemName}</td>
             <td style="padding: 10px 14px; border-bottom: 1px solid #f1f5f9; text-align: center;">${safeQty}</td>
-            <td style="padding: 10px 14px; border-bottom: 1px solid #f1f5f9; text-align: center;">${formatCurrencyPdf(price)}</td>
-            <td style="padding: 10px 14px; border-bottom: 1px solid #f1f5f9; text-align: center; font-weight: 600;">${formatCurrencyPdf(lineTotal)}</td>
+            <td style="padding: 10px 14px; border-bottom: 1px solid #f1f5f9; text-align: center;">${formatCurrencyPdf(price, currency)}</td>
+            <td style="padding: 10px 14px; border-bottom: 1px solid #f1f5f9; text-align: center; font-weight: 600;">${formatCurrencyPdf(lineTotal, currency)}</td>
           </tr>`;
-      }).join("")
-    : `<tr><td colspan="4" style="padding: 16px; text-align: center; color: #94a3b8;">لا توجد بنود مفصلة لهذه الفاتورة</td></tr>`;
+          })
+          .join("")
+      : `<tr><td colspan="4" style="padding: 16px; text-align: center; color: #94a3b8;">لا توجد بنود مفصلة لهذه الفاتورة</td></tr>`;
 
   return `
-    <div style="
-      font-family: 'Cairo', 'Segoe UI', Arial, sans-serif;
-      direction: rtl;
-      width: 794px;
-      min-height: 1123px;
-      background: #ffffff;
-      padding: 60px;
-      box-sizing: border-box;
-      color: #1e293b;
-    ">
+    <div style="font-family: 'Cairo', 'Segoe UI', Arial, sans-serif; direction: rtl; width: 794px; min-height: 1123px; background: #ffffff; padding: 60px; box-sizing: border-box; color: #1e293b;">
       <!-- Header -->
       <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 48px; padding-bottom: 32px; border-bottom: 3px solid #3b82f6;">
         <div>
-          <div style="font-size: 32px; font-weight: 800; color: #1e40af; letter-spacing: -0.5px;">نظام ERP الداخلي</div>
-          <div style="font-size: 14px; color: #64748b; margin-top: 6px;">نظام إدارة الموارد المؤسسية</div>
+          ${logoHtml}
+          <div style="font-size: 28px; font-weight: 800; color: #1e40af; letter-spacing: -0.5px;">${companyName}</div>
+          <div style="font-size: 13px; color: #64748b; margin-top: 4px;">${companyActivity}</div>
+          ${companyMetaLines}
         </div>
         <div style="text-align: left;">
           <div style="font-size: 28px; font-weight: 700; color: #1e293b;">فاتورة</div>
@@ -158,55 +165,57 @@ function buildInvoiceHTML(invoice: Invoice, order: OrderDetail): string {
               <th style="padding: 12px 14px; text-align: center; font-size: 13px; font-weight: 600;">الإجمالي</th>
             </tr>
           </thead>
-          <tbody>
-            ${itemRows}
-          </tbody>
+          <tbody>${itemRows}</tbody>
         </table>
       </div>
 
       <!-- Totals -->
       <div style="display: flex; justify-content: flex-start; margin-bottom: 40px;">
         <div style="min-width: 280px; border: 1px solid #e2e8f0; border-radius: 12px; overflow: hidden;">
-          ${items.length > 0 ? `
-          <div style="display: flex; justify-content: space-between; padding: 12px 16px; background: #f8fafc; border-bottom: 1px solid #e2e8f0;">
-            <span style="font-size: 13px; color: #64748b;">المجموع الجزئي:</span>
-            <span style="font-size: 13px; font-weight: 600;">${formatCurrencyPdf(subtotal)}</span>
-          </div>` : ""}
+          ${
+            items.length > 0
+              ? `<div style="display: flex; justify-content: space-between; padding: 12px 16px; background: #f8fafc; border-bottom: 1px solid #e2e8f0;">
+              <span style="font-size: 13px; color: #64748b;">المجموع الجزئي:</span>
+              <span style="font-size: 13px; font-weight: 600;">${formatCurrencyPdf(subtotal, currency)}</span>
+            </div>`
+              : ""
+          }
           <div style="display: flex; justify-content: space-between; padding: 16px; background: #1e40af;">
             <span style="font-size: 16px; font-weight: 700; color: white;">الإجمالي الكلي:</span>
-            <span style="font-size: 18px; font-weight: 800; color: white;">${formatCurrencyPdf(total)}</span>
+            <span style="font-size: 18px; font-weight: 800; color: white;">${formatCurrencyPdf(total, currency)}</span>
           </div>
         </div>
       </div>
 
-      ${safeNotes ? `
-      <!-- Notes -->
-      <div style="background: #fffbeb; border: 1px solid #fde68a; border-radius: 12px; padding: 16px; margin-bottom: 32px;">
+      ${
+        safeNotes
+          ? `<div style="background: #fffbeb; border: 1px solid #fde68a; border-radius: 12px; padding: 16px; margin-bottom: 32px;">
         <div style="font-size: 13px; font-weight: 600; color: #92400e; margin-bottom: 6px;">ملاحظات:</div>
         <div style="font-size: 13px; color: #78350f;">${safeNotes}</div>
-      </div>` : ""}
+      </div>`
+          : ""
+      }
 
       <!-- Footer -->
       <div style="border-top: 2px solid #e2e8f0; padding-top: 24px; text-align: center;">
-        <div style="font-size: 13px; color: #94a3b8;">شكراً لتعاملكم معنا — نظام ERP الداخلي</div>
+        <div style="font-size: 13px; color: #94a3b8;">شكراً لتعاملكم معنا — ${companyName}</div>
         <div style="font-size: 12px; color: #cbd5e1; margin-top: 4px;">هذه الفاتورة صادرة إلكترونياً ولا تحتاج إلى توقيع</div>
       </div>
     </div>
   `;
 }
 
-export async function generateInvoicePdf(invoice: Invoice, order: OrderDetail): Promise<void> {
+export async function generateInvoicePdf(invoice: Invoice, order: OrderDetail, company?: CompanyInfo): Promise<void> {
   const container = document.createElement("div");
   container.style.position = "fixed";
   container.style.top = "-9999px";
   container.style.left = "-9999px";
   container.style.zIndex = "-1";
-  container.innerHTML = buildInvoiceHTML(invoice, order);
+  container.innerHTML = buildInvoiceHTML(invoice, order, company);
   document.body.appendChild(container);
 
   try {
     const innerEl = container.firstElementChild as HTMLElement;
-
     const canvas = await html2canvas(innerEl, {
       scale: 2,
       useCORS: true,
@@ -216,16 +225,9 @@ export async function generateInvoicePdf(invoice: Invoice, order: OrderDetail): 
     });
 
     const imgData = canvas.toDataURL("image/jpeg", 0.95);
-
-    const pdf = new jsPDF({
-      orientation: "portrait",
-      unit: "pt",
-      format: "a4",
-    });
-
+    const pdf = new jsPDF({ orientation: "portrait", unit: "pt", format: "a4" });
     const pageWidth = pdf.internal.pageSize.getWidth();
     const pageHeight = pdf.internal.pageSize.getHeight();
-
     const imgWidth = pageWidth;
     const imgHeight = (canvas.height / canvas.width) * imgWidth;
 
@@ -235,24 +237,18 @@ export async function generateInvoicePdf(invoice: Invoice, order: OrderDetail): 
       let yOffset = 0;
       let remaining = imgHeight;
       let pageNum = 0;
-
       while (remaining > 0) {
         if (pageNum > 0) pdf.addPage();
-
         const sliceHeight = Math.min(remaining, pageHeight);
         const srcY = (yOffset / imgHeight) * canvas.height;
         const srcHeight = (sliceHeight / imgHeight) * canvas.height;
-
         const sliceCanvas = document.createElement("canvas");
         sliceCanvas.width = canvas.width;
         sliceCanvas.height = srcHeight;
         const ctx = sliceCanvas.getContext("2d");
-        if (ctx) {
-          ctx.drawImage(canvas, 0, srcY, canvas.width, srcHeight, 0, 0, canvas.width, srcHeight);
-        }
+        if (ctx) ctx.drawImage(canvas, 0, srcY, canvas.width, srcHeight, 0, 0, canvas.width, srcHeight);
         const sliceData = sliceCanvas.toDataURL("image/jpeg", 0.95);
         pdf.addImage(sliceData, "JPEG", 0, 0, imgWidth, sliceHeight);
-
         yOffset += sliceHeight;
         remaining -= sliceHeight;
         pageNum++;

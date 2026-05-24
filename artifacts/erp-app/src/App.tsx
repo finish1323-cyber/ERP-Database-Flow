@@ -5,10 +5,7 @@ import {
   QueryClient,
   QueryClientProvider,
 } from "@tanstack/react-query";
-import {
-  ApiError,
-  setAuthTokenGetter,
-} from "@workspace/api-client-react";
+import { ApiError, setAuthTokenGetter } from "@workspace/api-client-react";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { AppLayout } from "@/components/layout/AppLayout";
@@ -17,6 +14,7 @@ import { Purchasing } from "@/pages/Purchasing";
 import { Warehouse } from "@/pages/Warehouse";
 import { CRM } from "@/pages/CRM";
 import { Sales } from "@/pages/Sales";
+import { Settings } from "@/pages/Settings";
 import { Login } from "@/pages/Login";
 import NotFound from "@/pages/not-found";
 import { useAuthState } from "@/hooks/use-auth";
@@ -56,6 +54,7 @@ function ProtectedRoutes() {
         <Route path="/warehouse" component={Warehouse} />
         <Route path="/crm" component={CRM} />
         <Route path="/sales" component={Sales} />
+        <Route path="/settings" component={Settings} />
         <Route component={NotFound} />
       </Switch>
     </AppLayout>
@@ -67,10 +66,7 @@ function AuthGate() {
 
   if (authState.status === "loading") {
     return (
-      <div
-        dir="rtl"
-        className="min-h-screen flex items-center justify-center bg-slate-50"
-      >
+      <div dir="rtl" className="min-h-screen flex items-center justify-center bg-slate-50">
         <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin" />
       </div>
     );

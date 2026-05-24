@@ -10,18 +10,26 @@ import customersRouter from "./customers";
 import ordersRouter from "./orders";
 import invoicesRouter from "./invoices";
 import dashboardRouter from "./dashboard";
+import companyProfileRouter from "./company-profile";
+import employeesRouter from "./employees";
+import auditLogRouter from "./audit-log";
+import backupRouter from "./backup";
 import { requireAuth } from "../middlewares/require-auth";
 
 const router: IRouter = Router();
 
-// Public routes — must remain unauthenticated.
+// Public routes
 router.use(healthRouter);
 router.use(authRouter);
 
-// Everything below requires a valid session token.
+// All routes below require a valid session token
 router.use(requireAuth);
 
 router.use(dashboardRouter);
+router.use(companyProfileRouter);
+router.use(employeesRouter);
+router.use(auditLogRouter);
+router.use(backupRouter);
 router.use(suppliersRouter);
 router.use(itemsRouter);
 router.use(priceComparisonsRouter);

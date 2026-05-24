@@ -23,7 +23,7 @@ export function setAuthToken(token: string | null): void {
       localStorage.removeItem(TOKEN_STORAGE_KEY);
     }
   } catch {
-    // localStorage unavailable — ignore.
+    // localStorage unavailable
   }
   for (const listener of listeners) {
     listener(token);
@@ -32,9 +32,7 @@ export function setAuthToken(token: string | null): void {
 
 export function subscribeAuth(listener: Listener): () => void {
   listeners.add(listener);
-  return () => {
-    listeners.delete(listener);
-  };
+  return () => { listeners.delete(listener); };
 }
 
 export function clearAuth(): void {
@@ -43,31 +41,33 @@ export function clearAuth(): void {
 
 export interface LoginResponse {
   token: string;
+  role: string;
+  name: string;
 }
 
-export async function loginWithPassword(password: string): Promise<void> {
+export async function loginWithCredentials(email: string, password: string): Promise<LoginResponse> {
   const base = import.meta.env.BASE_URL;
   const url = `${base}api/auth/login`;
   const response = await fetch(url, {
     method: "POST",
     headers: { "content-type": "application/json", accept: "application/json" },
-    body: JSON.stringify({ password }),
+    body: JSON.stringify({ email, password }),
   });
-
   if (!response.ok) {
     let message = "تعذر تسجيل الدخول. حاول مرة أخرى.";
     try {
       const data = await response.json();
       if (typeof data?.message === "string") message = data.message;
-    } catch {
-      // ignore parse errors
-    }
+    } catch { /* ignore */ }
     throw new Error(message);
   }
-
   const data = (await response.json()) as LoginResponse;
-  if (!data?.token) {
-    throw new Error("استجابة الخادم غير صالحة.");
-  }
+  if (!data?.token) throw new Error("استجابة الخادم غير صالحة.");
   setAuthToken(data.token);
+  return data;
+}
+
+/** @deprecated use loginWithCredentials */
+export async function loginWithPassword(password: string): Promise<void> {
+  await loginWithCredentials("", password);
 }
