@@ -8,3 +8,6 @@ export * from "./invoices";
 export * from "./employees";
 export * from "./company-profile";
 export * from "./audit-log";
+export * from "./chat";
+export * from "./notifications";
+export * from "./tasks";

@@ -8,6 +8,20 @@ import { logAudit } from "../lib/audit";
 
 const router: IRouter = Router();
 
+// GET /employees/directory — basic info for all authenticated users (for DM / task assignment)
+router.get("/employees/directory", async (req, res): Promise<void> => {
+  try {
+    const rows = await db
+      .select({ id: employeesTable.id, name: employeesTable.name, role: employeesTable.role })
+      .from(employeesTable)
+      .where(eq(employeesTable.isActive, true));
+    res.json(rows);
+  } catch (err) {
+    req.log.error(err);
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
 function sanitize(row: typeof employeesTable.$inferSelect) {
   const { passwordHash: _, ...rest } = row;
   return rest;

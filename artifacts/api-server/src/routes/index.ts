@@ -14,6 +14,9 @@ import companyProfileRouter from "./company-profile";
 import employeesRouter from "./employees";
 import auditLogRouter from "./audit-log";
 import backupRouter from "./backup";
+import chatRouter from "./chat";
+import notificationsRouter from "./notifications";
+import tasksRouter from "./tasks";
 import { requireAuth } from "../middlewares/require-auth";
 
 const router: IRouter = Router();
@@ -38,5 +41,8 @@ router.use(stockMovementsRouter);
 router.use(customersRouter);
 router.use(ordersRouter);
 router.use(invoicesRouter);
+router.use(chatRouter);
+router.use(notificationsRouter);
+router.use(tasksRouter);
 
 export default router;

@@ -15,6 +15,9 @@ import { Warehouse } from "@/pages/Warehouse";
 import { CRM } from "@/pages/CRM";
 import { Sales } from "@/pages/Sales";
 import { Settings } from "@/pages/Settings";
+import { Chat } from "@/pages/Chat";
+import { Notifications } from "@/pages/Notifications";
+import { Tasks } from "@/pages/Tasks";
 import { Login } from "@/pages/Login";
 import NotFound from "@/pages/not-found";
 import { useAuthState } from "@/hooks/use-auth";
@@ -54,6 +57,9 @@ function ProtectedRoutes() {
         <Route path="/warehouse" component={Warehouse} />
         <Route path="/crm" component={CRM} />
         <Route path="/sales" component={Sales} />
+        <Route path="/chat" component={Chat} />
+        <Route path="/notifications" component={Notifications} />
+        <Route path="/tasks" component={Tasks} />
         <Route path="/settings" component={Settings} />
         <Route component={NotFound} />
       </Switch>

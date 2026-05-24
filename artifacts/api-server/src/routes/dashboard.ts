@@ -9,8 +9,10 @@ import {
   inventoryTable,
   orderItemsTable,
   stockMovementsTable,
+  tasksTable,
+  employeesTable,
 } from "@workspace/db/schema";
-import { count, sql, desc } from "drizzle-orm";
+import { count, sql, desc, and, eq, lt, ne, lte } from "drizzle-orm";
 
 const router: IRouter = Router();
 
@@ -161,6 +163,119 @@ router.get("/dashboard/analytics/top-customers", async (req, res) => {
         ordersCount: parseInt(r.ordersCount),
       }))
     );
+  } catch (err) {
+    req.log.error(err);
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
+// GET /dashboard/personal — role-specific personal dashboard data
+router.get("/dashboard/personal", async (req, res) => {
+  try {
+    const role = req.session?.role ?? "sales";
+    const me = req.session?.employeeId ?? null;
+
+    // Overdue tasks — all roles see their own; admin sees all
+    const overdueBase = and(
+      sql`${tasksTable.dueDate} < NOW()`,
+      ne(tasksTable.status, "done"),
+    );
+    const overdueWhere = role === "admin" ? overdueBase : and(overdueBase, me ? eq(tasksTable.assignedTo, me) : sql`false`);
+    const overdueTasks = await db
+      .select({
+        id: tasksTable.id,
+        title: tasksTable.title,
+        priority: tasksTable.priority,
+        dueDate: tasksTable.dueDate,
+        assigneeName: employeesTable.name,
+      })
+      .from(tasksTable)
+      .leftJoin(employeesTable, eq(tasksTable.assignedTo, employeesTable.id))
+      .where(overdueWhere)
+      .orderBy(tasksTable.dueDate)
+      .limit(10);
+
+    // Upcoming tasks (next 7 days)
+    const upcomingBase = and(
+      sql`${tasksTable.dueDate} >= NOW()`,
+      sql`${tasksTable.dueDate} <= NOW() + INTERVAL '7 days'`,
+      ne(tasksTable.status, "done"),
+    );
+    const upcomingWhere = role === "admin" ? upcomingBase : and(upcomingBase, me ? eq(tasksTable.assignedTo, me) : sql`false`);
+    const upcomingTasks = await db
+      .select({
+        id: tasksTable.id,
+        title: tasksTable.title,
+        priority: tasksTable.priority,
+        dueDate: tasksTable.dueDate,
+        assigneeName: employeesTable.name,
+      })
+      .from(tasksTable)
+      .leftJoin(employeesTable, eq(tasksTable.assignedTo, employeesTable.id))
+      .where(upcomingWhere)
+      .orderBy(tasksTable.dueDate)
+      .limit(10);
+
+    // Low stock items
+    const allInventory = await db.select().from(inventoryTable);
+    const lowStockItems = allInventory
+      .filter((i) => i.quantityAvailable <= i.safetyLevel)
+      .slice(0, 10);
+
+    // Pending orders count
+    const [pendingOrdersRow] = await db
+      .select({ count: sql<string>`COUNT(*)` })
+      .from(ordersTable)
+      .where(eq(ordersTable.status, "pending"));
+
+    // Unpaid invoices count
+    const [unpaidRow] = await db
+      .select({ count: sql<string>`COUNT(*)` })
+      .from(invoicesTable)
+      .where(ne(invoicesTable.status, "paid"));
+
+    // Sales today & this month (admin + sales)
+    let todaySales = 0;
+    let monthSales = 0;
+    if (role === "admin" || role === "sales") {
+      const [todayRow] = await db
+        .select({ total: sql<string>`COALESCE(SUM(${invoicesTable.total}), 0)` })
+        .from(invoicesTable)
+        .where(sql`DATE(${invoicesTable.issuedAt}) = CURRENT_DATE AND ${invoicesTable.status} IN ('issued', 'paid')`);
+      const [monthRow] = await db
+        .select({ total: sql<string>`COALESCE(SUM(${invoicesTable.total}), 0)` })
+        .from(invoicesTable)
+        .where(sql`DATE_TRUNC('month', ${invoicesTable.issuedAt}) = DATE_TRUNC('month', CURRENT_DATE) AND ${invoicesTable.status} IN ('issued', 'paid')`);
+      todaySales = parseFloat(todayRow?.total ?? "0");
+      monthSales = parseFloat(monthRow?.total ?? "0");
+    }
+
+    // 7-day sales for admin chart
+    let sevenDaySales: { day: string; total: number }[] = [];
+    if (role === "admin") {
+      const rows = await db
+        .select({
+          day: sql<string>`TO_CHAR(DATE(${invoicesTable.issuedAt}), 'YYYY-MM-DD')`,
+          total: sql<string>`COALESCE(SUM(${invoicesTable.total}), 0)`,
+        })
+        .from(invoicesTable)
+        .where(sql`${invoicesTable.issuedAt} >= NOW() - INTERVAL '7 days' AND ${invoicesTable.status} IN ('issued', 'paid')`)
+        .groupBy(sql`DATE(${invoicesTable.issuedAt})`)
+        .orderBy(sql`DATE(${invoicesTable.issuedAt})`);
+      sevenDaySales = rows.map((r) => ({ day: r.day, total: parseFloat(r.total) }));
+    }
+
+    res.json({
+      overdueTasks,
+      upcomingTasks,
+      lowStockCount: lowStockItems.length,
+      lowStockItems,
+      pendingOrdersCount: parseInt(pendingOrdersRow?.count ?? "0"),
+      unpaidInvoicesCount: parseInt(unpaidRow?.count ?? "0"),
+      todaySales,
+      monthSales,
+      sevenDaySales,
+    });
   } catch (err) {
     req.log.error(err);
     res.status(500).json({ error: "Internal server error" });

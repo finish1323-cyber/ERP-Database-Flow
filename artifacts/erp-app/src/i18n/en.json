@@ -1,0 +1,92 @@
+{
+  "nav": {
+    "dashboard": "Dashboard",
+    "purchasing": "Purchasing & Suppliers",
+    "warehouse": "Warehouse & Logistics",
+    "crm": "Customer Service (CRM)",
+    "sales": "Sales & Invoices",
+    "chat": "Internal Chat",
+    "tasks": "Tasks & Goals",
+    "notifications": "Notifications",
+    "settings": "Settings",
+    "signOut": "Sign Out"
+  },
+  "dashboard": {
+    "greeting_morning": "Good Morning",
+    "greeting_afternoon": "Good Afternoon",
+    "greeting_evening": "Good Evening",
+    "greeting_night": "Good Night",
+    "subtitle": "Here is your daily summary",
+    "action_required": "Action Required",
+    "follow_up": "Follow Up",
+    "all_good": "All Good",
+    "overdue_tasks": "Overdue Tasks",
+    "low_stock": "Low Stock Items",
+    "unpaid_invoices": "Unpaid Invoices",
+    "pending_orders": "Pending Orders",
+    "upcoming_tasks": "Upcoming Tasks",
+    "no_issues": "No Issues"
+  },
+  "login": {
+    "title": "Internal Management System",
+    "subtitle": "Sign in to access your system",
+    "email": "Email",
+    "password": "Password",
+    "submit": "Sign In",
+    "restricted": "Access is restricted to authorized team members only."
+  },
+  "chat": {
+    "title": "Internal Chat",
+    "channels": "Channels",
+    "direct_messages": "Direct Messages",
+    "new_channel": "New Channel",
+    "type_message": "Type a message...",
+    "send": "Send",
+    "select_conversation": "Select a conversation to start",
+    "no_messages": "No messages yet",
+    "channel_name": "Channel Name",
+    "channel_description": "Channel Description (optional)",
+    "create": "Create"
+  },
+  "notifications": {
+    "title": "Notifications",
+    "mark_all_read": "Mark All as Read",
+    "no_notifications": "No notifications",
+    "unread": "Unread"
+  },
+  "tasks": {
+    "title": "Tasks & Goals",
+    "add_task": "Add Task",
+    "todo": "To Do",
+    "in_progress": "In Progress",
+    "done": "Done",
+    "priority_low": "Low",
+    "priority_medium": "Medium",
+    "priority_high": "High",
+    "priority_urgent": "Urgent",
+    "no_tasks": "No tasks",
+    "task_title": "Task Title",
+    "description": "Description",
+    "assign_to": "Assign To",
+    "due_date": "Due Date",
+    "priority": "Priority",
+    "filter_employee": "Filter by Employee",
+    "filter_priority": "Filter by Priority",
+    "all_employees": "All Employees",
+    "all_priorities": "All Priorities",
+    "save": "Save",
+    "cancel": "Cancel",
+    "delete": "Delete",
+    "edit": "Edit"
+  },
+  "common": {
+    "loading": "Loading...",
+    "error": "An error occurred",
+    "save": "Save",
+    "cancel": "Cancel",
+    "delete": "Delete",
+    "edit": "Edit",
+    "search": "Search",
+    "language": "Language"
+  }
+}

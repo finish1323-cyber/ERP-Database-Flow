@@ -1,0 +1,92 @@
+{
+  "nav": {
+    "dashboard": "لوحة التحكم",
+    "purchasing": "المشتريات والموردين",
+    "warehouse": "المخزن واللوجستيات",
+    "crm": "خدمة العملاء",
+    "sales": "المبيعات والفواتير",
+    "chat": "الشات الداخلي",
+    "tasks": "المهام والأهداف",
+    "notifications": "الإشعارات",
+    "settings": "الإعدادات",
+    "signOut": "تسجيل الخروج"
+  },
+  "dashboard": {
+    "greeting_morning": "صباح الخير",
+    "greeting_afternoon": "مساء الخير",
+    "greeting_evening": "مساء النور",
+    "greeting_night": "طابت ليلتك",
+    "subtitle": "إليك ملخص يومك",
+    "action_required": "محتاج تتصرف دلوقتي",
+    "follow_up": "تابع",
+    "all_good": "تمام",
+    "overdue_tasks": "مهام متأخرة",
+    "low_stock": "مخزون ناقص",
+    "unpaid_invoices": "فواتير غير مدفوعة",
+    "pending_orders": "طلبات معلقة",
+    "upcoming_tasks": "مهام قريبة الموعد",
+    "no_issues": "لا توجد مشاكل"
+  },
+  "login": {
+    "title": "نظام الإدارة الداخلي",
+    "subtitle": "تسجيل الدخول للوصول إلى نظامك",
+    "email": "البريد الإلكتروني",
+    "password": "كلمة المرور",
+    "submit": "تسجيل الدخول",
+    "restricted": "الوصول مقصور على فريق المؤسسة فقط."
+  },
+  "chat": {
+    "title": "الشات الداخلي",
+    "channels": "القنوات",
+    "direct_messages": "رسائل مباشرة",
+    "new_channel": "قناة جديدة",
+    "type_message": "اكتب رسالة...",
+    "send": "إرسال",
+    "select_conversation": "اختر محادثة للبدء",
+    "no_messages": "لا توجد رسائل بعد",
+    "channel_name": "اسم القناة",
+    "channel_description": "وصف القناة (اختياري)",
+    "create": "إنشاء"
+  },
+  "notifications": {
+    "title": "الإشعارات",
+    "mark_all_read": "تعليم الكل كمقروء",
+    "no_notifications": "لا توجد إشعارات",
+    "unread": "غير مقروء"
+  },
+  "tasks": {
+    "title": "المهام والأهداف",
+    "add_task": "إضافة مهمة",
+    "todo": "قيد الانتظار",
+    "in_progress": "جاري التنفيذ",
+    "done": "مكتمل",
+    "priority_low": "منخفض",
+    "priority_medium": "متوسط",
+    "priority_high": "عالي",
+    "priority_urgent": "عاجل",
+    "no_tasks": "لا توجد مهام",
+    "task_title": "عنوان المهمة",
+    "description": "الوصف",
+    "assign_to": "إسناد إلى",
+    "due_date": "الموعد النهائي",
+    "priority": "الأولوية",
+    "filter_employee": "فلتر بالموظف",
+    "filter_priority": "فلتر بالأولوية",
+    "all_employees": "كل الموظفين",
+    "all_priorities": "كل الأولويات",
+    "save": "حفظ",
+    "cancel": "إلغاء",
+    "delete": "حذف",
+    "edit": "تعديل"
+  },
+  "common": {
+    "loading": "جاري التحميل...",
+    "error": "حدث خطأ",
+    "save": "حفظ",
+    "cancel": "إلغاء",
+    "delete": "حذف",
+    "edit": "تعديل",
+    "search": "بحث",
+    "language": "اللغة"
+  }
+}
